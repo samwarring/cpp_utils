@@ -1,5 +1,6 @@
 #include <catch2/catch.hpp>
 #include <samwarring/ring_buffer.hpp>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -50,6 +51,32 @@ TEST_CASE("ring buffer") {
         SECTION("iteration") {
             std::vector<int> expected{2, 3, 4, 5};
             REQUIRE(std::equal(buf.begin(), buf.end(), expected.begin()));
+        }
+
+        SECTION("unordered iteration") {
+            std::set<int> expected{2, 3, 4, 5};
+            std::set<int> actual{buf.unordered_begin(), buf.unordered_end()};
+            REQUIRE(std::equal(actual.begin(), actual.end(), expected.begin()));
+
+            SECTION("const unordered iteration") {
+                const ring_buffer<int>& cref = buf;
+                std::set<int> actual{cref.unordered_cbegin(),
+                                     cref.unordered_cend()};
+                REQUIRE(
+                    std::equal(actual.begin(), actual.end(), expected.begin()));
+            }
+        }
+
+        SECTION("partitioned iteration") {
+            std::vector<int> expected{2, 3, 4, 5};
+            std::vector<int> actual;
+            for (auto i : buf.first_part()) {
+                actual.push_back(i);
+            }
+            for (auto i : buf.second_part()) {
+                actual.push_back(i);
+            }
+            REQUIRE(std::equal(actual.begin(), actual.end(), expected.begin()));
         }
     }
 }

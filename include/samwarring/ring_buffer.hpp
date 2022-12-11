@@ -139,6 +139,30 @@ class ring_buffer {
         using iterator_base::iterator_base;
     };
 
+    using unordered_iterator = T*;
+
+    using const_unordered_iterator = const T*;
+
+    using partial_iterator = T*;
+
+    class partition {
+      public:
+        partial_iterator begin() noexcept {
+            return begin_;
+        }
+
+        partial_iterator end() noexcept {
+            return end_;
+        }
+
+      private:
+        friend class ring_buffer<T>;
+        partition(T* begin, T* end) : begin_{begin}, end_{end} {}
+
+        T* begin_;
+        T* end_;
+    };
+
     iterator begin() noexcept {
         return iterator{*this, front_index(), false};
     }
@@ -153,6 +177,30 @@ class ring_buffer {
 
     const_iterator cend() noexcept {
         return const_iterator{*this, front_index(), true};
+    }
+
+    unordered_iterator unordered_begin() noexcept {
+        return data_;
+    }
+
+    unordered_iterator unordered_end() noexcept {
+        return data_ + capacity_;
+    }
+
+    const_unordered_iterator unordered_cbegin() const noexcept {
+        return data_;
+    }
+
+    const_unordered_iterator unordered_cend() const noexcept {
+        return data_ + capacity_;
+    }
+
+    partition first_part() noexcept {
+        return partition{data_ + next_, data_ + capacity_};
+    }
+
+    partition second_part() noexcept {
+        return partition{data_, data_ + next_};
     }
 
   private:
