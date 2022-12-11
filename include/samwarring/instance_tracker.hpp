@@ -89,7 +89,7 @@ class instance_tracker {
      */
     instance_tracker(shared_instance_tracker_stats stats) noexcept
         : stats_(std::move(stats)) {
-        assert(stats);
+        assert(stats_);
         id_ = stats_->next_id++;
         stats_->instances++;
         stats_->main_constructors++;
