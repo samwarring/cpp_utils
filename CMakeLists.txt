@@ -9,7 +9,10 @@ project(
     VERSION 0.0.1
 )
 
-add_library(samwarring_cpp_utils INTERFACE)
+add_library(
+    samwarring_cpp_utils
+    INTERFACE
+)
 target_include_directories(
     samwarring_cpp_utils
     INTERFACE include

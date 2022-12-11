@@ -20,7 +20,7 @@ format:
   
   # If a positional argument group contains more than this many
   # arguments, then force it to a vertical layout.
-  max_pargs_hwrap: 3
+  max_pargs_hwrap: 1
 
   # If true, separate flow control names from their parentheses
   # with a space
