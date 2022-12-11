@@ -2,6 +2,7 @@ add_executable(
     samwarring_cpp_utils_test
     main.cpp
     instance_tracker_test.cpp
+    ring_buffer_test.cpp
 )
 
 # Use Catch2 unit test framework

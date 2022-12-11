@@ -104,7 +104,7 @@ class instance_tracker {
      * @param other Instance to copy. Its stats structure is shared by the new
      * instance. Its ID is not modified.
      */
-    instance_tracker(const instance_tracker &other) noexcept
+    instance_tracker(const instance_tracker& other) noexcept
         : stats_(other.stats_), id_{stats_->next_id++} {
         stats_->instances++;
         stats_->copy_constructors++;
@@ -118,7 +118,7 @@ class instance_tracker {
      * @param other Moved-from instance. Its stats structure is shared with the
      * new instance. Its ID is moved into the new instance, then set to 0.
      */
-    instance_tracker(instance_tracker &&other) noexcept
+    instance_tracker(instance_tracker&& other) noexcept
         : stats_(other.stats_), id_{other.id_} {
         other.id_ = 0;
         stats_->instances++;
@@ -148,7 +148,7 @@ class instance_tracker {
      *
      * @param other Instance to copy.
      */
-    instance_tracker &operator=(const instance_tracker &other) noexcept {
+    instance_tracker& operator=(const instance_tracker& other) noexcept {
         stats_->copy_assignments++;
         stats_->all_assignments++;
         stats_->all_copies++;
@@ -163,7 +163,7 @@ class instance_tracker {
      *
      * @param other Moved-from instance.
      */
-    instance_tracker &operator=(instance_tracker &&other) noexcept {
+    instance_tracker& operator=(instance_tracker&& other) noexcept {
         if (id_) {
             // Only track non-trivial ids that are evicted.
             stats_->evicted_ids.insert(id_);
