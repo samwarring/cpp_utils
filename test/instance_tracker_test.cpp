@@ -97,4 +97,17 @@ TEST_CASE("instance tracker") {
             REQUIRE(stats->evicted_ids.count(t2_id) == 1);
         }
     }
+
+    SECTION("destructor") {
+        int t1_id;
+        {
+            instance_tracker t1(stats);
+            t1_id = t1.id();
+        }
+
+        SECTION("stats updated") {
+            REQUIRE(stats->destructors == 1);
+            REQUIRE(stats->destroyed_ids.count(t1_id) == 1);
+        }
+    }
 }
