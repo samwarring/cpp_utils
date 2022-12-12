@@ -42,22 +42,70 @@ class ring_buffer {
                   "Item type is not move-assignable");
 
   public:
+    /**
+     * @name Constructors
+     * @{
+     */
+
+    /**
+     * Default constructor.
+     *
+     * Constructs a new ring buffer that cannot hold any items. Such instances
+     * are useless unless they are assigned the contents of another ring_buffer
+     * instance.
+     */
     ring_buffer() noexcept : data_{nullptr}, capacity_{0}, next_{0} {}
 
+    /**
+     * Main constructor.
+     *
+     * Constructs a new ring buffer with `capacity` items. All items are
+     * default-constructed.
+     *
+     * @param capacity Number of items in the buffer
+     */
     ring_buffer(std::size_t capacity)
         : data_{new T[capacity]()}, capacity_{capacity}, next_{0} {}
 
+    /**
+     * Copy constructor.
+     *
+     * Constructs a ring buffer from an existing one. The new buffer first
+     * default-constructs all elements, then copy-assigns each element from
+     * the original buffer into the new one.
+     *
+     * @param other The original buffer.
+     */
     ring_buffer(const ring_buffer<T>& other)
         : data_{new T[other.capacity_]()}, capacity_{other.capacity_},
-          next_{other.next_} {}
+          next_{other.next_} {
+        std::copy(other.data_, other.data_ + capacity_, data_);
+    }
 
+    /**
+     * Move constructor.
+     *
+     * Constructs a ring buffer by stealing the contents from an existing one.
+     * The moved-from buffer becomes an empty buffer with no data and no
+     * capacity.
+     *
+     * @param other
+     */
     ring_buffer(ring_buffer<T>&& other)
         : data_{other.data_}, capacity_{other.capacity_}, next_{other.next_} {
         other.data_ = nullptr;
         other.capacity_ = 0;
         other.next_ = 0;
     }
+    /**
+     * @} End of Constructors
+     */
 
+    /**
+     * Destructor.
+     *
+     * Destroys all items, and releases memory.
+     */
     ~ring_buffer() {
         delete[] data_;
     }

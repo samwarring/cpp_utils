@@ -81,11 +81,23 @@ TEST_CASE("ring buffer") {
 
         SECTION("copy constructor") {
             ring_buffer<int> buf2{buf};
-            REQUIRE(buf2.capacity() == 4);
-            REQUIRE(buf.capacity() == 4);
             buf2.push_back(7);
-            REQUIRE(buf.back() == 5);
-            REQUIRE(buf2.back() == 7);
+
+            SECTION("original buffer unmodified") {
+                REQUIRE(buf.capacity() == 4);
+                REQUIRE(buf[0] == 2);
+                REQUIRE(buf[1] == 3);
+                REQUIRE(buf[2] == 4);
+                REQUIRE(buf[3] == 5);
+            }
+
+            SECTION("copy-constructed buffer values") {
+                REQUIRE(buf2.capacity() == 4);
+                REQUIRE(buf2[0] == 3);
+                REQUIRE(buf2[1] == 4);
+                REQUIRE(buf2[2] == 5);
+                REQUIRE(buf2[3] == 7);
+            }
         }
 
         SECTION("move constructor") {
