@@ -60,8 +60,8 @@ TEST_CASE("ring buffer") {
 
             SECTION("const unordered iteration") {
                 const ring_buffer<int>& cref = buf;
-                std::set<int> actual{cref.unordered_cbegin(),
-                                     cref.unordered_cend()};
+                std::set<int> actual{cref.unordered_begin(),
+                                     cref.unordered_end()};
                 REQUIRE(
                     std::equal(actual.begin(), actual.end(), expected.begin()));
             }
@@ -116,6 +116,6 @@ TEST_CASE("const ring buffer") {
 
     SECTION("iteration") {
         std::vector<int> expected{1, 2, 3, 4};
-        REQUIRE(std::equal(buf.cbegin(), buf.cend(), expected.begin()));
+        REQUIRE(std::equal(buf.begin(), buf.end(), expected.begin()));
     }
 }
