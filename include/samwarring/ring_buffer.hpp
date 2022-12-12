@@ -47,8 +47,23 @@ class ring_buffer {
     ring_buffer(std::size_t capacity)
         : data_{new T[capacity]()}, capacity_{capacity}, next_{0} {}
 
+    ring_buffer(const ring_buffer<T>& other)
+        : data_{new T[other.capacity_]()}, capacity_{other.capacity_},
+          next_{other.next_} {}
+
+    ring_buffer(ring_buffer<T>&& other)
+        : data_{other.data_}, capacity_{other.capacity_}, next_{other.next_} {
+        other.data_ = nullptr;
+        other.capacity_ = 0;
+        other.next_ = 0;
+    }
+
     ~ring_buffer() {
         delete[] data_;
+    }
+
+    std::size_t capacity() const noexcept {
+        return capacity_;
     }
 
     void push_back(T item) noexcept(std::is_nothrow_move_assignable<T>::value) {

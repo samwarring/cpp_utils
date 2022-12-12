@@ -78,6 +78,25 @@ TEST_CASE("ring buffer") {
             }
             REQUIRE(std::equal(actual.begin(), actual.end(), expected.begin()));
         }
+
+        SECTION("copy constructor") {
+            ring_buffer<int> buf2{buf};
+            REQUIRE(buf2.capacity() == 4);
+            REQUIRE(buf.capacity() == 4);
+            buf2.push_back(7);
+            REQUIRE(buf.back() == 5);
+            REQUIRE(buf2.back() == 7);
+        }
+
+        SECTION("move constructor") {
+            ring_buffer<int> buf2{std::move(buf)};
+            REQUIRE(buf.capacity() == 0);
+            REQUIRE(buf2.capacity() == 4);
+            REQUIRE(buf2[0] == 2);
+            REQUIRE(buf2[1] == 3);
+            REQUIRE(buf2[2] == 4);
+            REQUIRE(buf2[3] == 5);
+        }
     }
 }
 
