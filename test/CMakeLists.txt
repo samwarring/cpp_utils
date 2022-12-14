@@ -3,6 +3,13 @@ add_executable(
     main.cpp
     instance_tracker_test.cpp
     ring_buffer_test.cpp
+    singleton_test.cpp
+)
+
+# Require std::thread
+find_package(
+    Threads
+    REQUIRED
 )
 
 # Use Catch2 unit test framework
@@ -13,11 +20,6 @@ fetchcontent_declare(
     GIT_TAG v2.13.1
 )
 fetchcontent_makeavailable(Catch2)
-target_link_libraries(
-    samwarring_cpp_utils_test
-    PRIVATE Catch2
-            samwarring_cpp_utils
-)
 fetchcontent_getproperties(
     Catch2
     SOURCE_DIR Catch2_SOURCE_DIR
@@ -29,3 +31,10 @@ list(
 )
 include(Catch)
 catch_discover_tests(samwarring_cpp_utils_test)
+
+target_link_libraries(
+    samwarring_cpp_utils_test
+    PRIVATE Catch2
+            samwarring_cpp_utils
+            Threads::Threads
+)
