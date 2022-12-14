@@ -60,10 +60,10 @@ TEST_CASE("ring buffer") {
 
             SECTION("const unordered iteration") {
                 const ring_buffer<int>& cref = buf;
-                std::set<int> actual{cref.unordered_begin(),
-                                     cref.unordered_end()};
-                REQUIRE(
-                    std::equal(actual.begin(), actual.end(), expected.begin()));
+                std::set<int> actual_unordered{cref.unordered_begin(),
+                                               cref.unordered_end()};
+                REQUIRE(std::equal(actual_unordered.begin(),
+                                   actual_unordered.end(), expected.begin()));
             }
         }
 
@@ -137,16 +137,16 @@ TEST_CASE("const ring buffer") {
     const ring_buffer<int>& cbuf = buf;
 
     SECTION("access") {
-        REQUIRE(buf.front() == 1);
-        REQUIRE(buf.back() == 4);
-        REQUIRE(buf[0] == 1);
-        REQUIRE(buf[1] == 2);
-        REQUIRE(buf[2] == 3);
-        REQUIRE(buf[3] == 4);
+        REQUIRE(cbuf.front() == 1);
+        REQUIRE(cbuf.back() == 4);
+        REQUIRE(cbuf[0] == 1);
+        REQUIRE(cbuf[1] == 2);
+        REQUIRE(cbuf[2] == 3);
+        REQUIRE(cbuf[3] == 4);
     }
 
     SECTION("iteration") {
         std::vector<int> expected{1, 2, 3, 4};
-        REQUIRE(std::equal(buf.begin(), buf.end(), expected.begin()));
+        REQUIRE(std::equal(cbuf.begin(), cbuf.end(), expected.begin()));
     }
 }

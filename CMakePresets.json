@@ -2,6 +2,20 @@
     "version": 3,
     "configurePresets": [
         {
+            "name": "debug",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "relwithdebinfo",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
             "name": "windows-base",
             "hidden": true,
             "generator": "Ninja",
@@ -16,24 +30,25 @@
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "cl",
-                "CMAKE_CXX_COMPILER": "cl"
+                "CMAKE_CXX_COMPILER": "cl",
+                "CMAKE_CXX_FLAGS": "/W4 /WX /EHsc"
             }
         },
         {
             "name": "windows-debug",
             "displayName": "Windows Debug",
-            "inherits": "windows-base",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
-            }
+            "inherits": [
+                "windows-base",
+                "debug"
+            ]
         },
         {
             "name": "windows-release",
             "displayName": "Windows Release",
-            "inherits": "windows-base",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
-            }
+            "inherits": [
+                "windows-base",
+                "relwithdebinfo"
+            ]
         }
     ]
 }

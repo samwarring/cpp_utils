@@ -149,6 +149,7 @@ class instance_tracker {
      * @param other Instance to copy.
      */
     instance_tracker& operator=(const instance_tracker& other) noexcept {
+        (void)other;
         stats_->copy_assignments++;
         stats_->all_assignments++;
         stats_->all_copies++;
