@@ -207,28 +207,6 @@ class ring_buffer {
     using const_unordered_iterator = const T*;
     using partial_iterator = T*;
 
-    template <class U>
-    class partition_base {
-      public:
-        partial_iterator begin() noexcept {
-            return begin_;
-        }
-
-        partial_iterator end() noexcept {
-            return end_;
-        }
-
-      private:
-        friend class ring_buffer<T>;
-        partition_base(U* begin, U* end) : begin_{begin}, end_{end} {}
-
-        U* begin_;
-        U* end_;
-    };
-
-    using partition = partition_base<T>;
-    using const_partition = partition_base<const T>;
-
     iterator begin() noexcept {
         return iterator{data_, capacity_, data_ + front_index(), false};
     }
@@ -261,20 +239,26 @@ class ring_buffer {
         return data_ + capacity_;
     }
 
-    partition first_part() noexcept {
-        return partition{data_ + next_, data_ + capacity_};
+    template <class F>
+    void for_each(F callback) noexcept(std::is_nothrow_invocable_v<F, T&>) {
+        for (T* it = data_ + next_; it != data_ + capacity_; ++it) {
+            callback(*it);
+        }
+        for (T* it = data_; it != data_ + next_; ++it) {
+            callback(*it);
+        }
     }
 
-    const_partition first_part() const noexcept {
-        return const_partition{data_ + next_, data_ + capacity_};
-    }
+    template <class F>
+    void for_each(F callback) const
+        noexcept(std::is_nothrow_invocable_v<F, const T&>) {
 
-    partition second_part() noexcept {
-        return partition{data_, data_ + next_};
-    }
-
-    const_partition second_part() const noexcept {
-        return const_partition{data_, data_ + next_};
+        for (const T* it = data_ + next_; it != data_ + capacity_; ++it) {
+            callback(*it);
+        }
+        for (const T* it = data_; it != data_ + next_; ++it) {
+            callback(*it);
+        }
     }
 
   private:

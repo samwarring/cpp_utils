@@ -67,15 +67,10 @@ TEST_CASE("ring buffer") {
             }
         }
 
-        SECTION("partitioned iteration") {
+        SECTION("for_each iteration") {
             std::vector<int> expected{2, 3, 4, 5};
             std::vector<int> actual;
-            for (auto i : buf.first_part()) {
-                actual.push_back(i);
-            }
-            for (auto i : buf.second_part()) {
-                actual.push_back(i);
-            }
+            buf.for_each([&](int val) { actual.push_back(val); });
             REQUIRE(std::equal(actual.begin(), actual.end(), expected.begin()));
         }
 
