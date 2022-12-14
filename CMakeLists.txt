@@ -17,6 +17,10 @@ target_include_directories(
     samwarring_cpp_utils
     INTERFACE include
 )
+target_compile_features(
+    samwarring_cpp_utils
+    INTERFACE cxx_std_17
+)
 
 if (PROJECT_IS_TOP_LEVEL)
     enable_testing()
