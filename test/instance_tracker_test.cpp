@@ -1,10 +1,36 @@
 #include <catch2/catch.hpp>
 #include <memory>
 #include <samwarring/instance_tracker.hpp>
+#include <samwarring/singleton.hpp>
 
 using namespace samwarring;
 
 TEST_CASE("instance tracker") {
+    SECTION("default instance") {
+        auto default_stats =
+            reference_counted_singleton<instance_tracker_stats>();
+        REQUIRE(default_stats->instances == 0);
+        REQUIRE(default_stats->default_constructors == 0);
+
+        instance_tracker default_tracker;
+        instance_tracker default_tracker2;
+
+        SECTION("stats updated") {
+            REQUIRE(default_stats->instances == 2);
+            REQUIRE(default_stats->default_constructors == 2);
+        }
+
+        SECTION("used singleton stats") {
+            REQUIRE(default_tracker.stats() == default_stats);
+            REQUIRE(default_tracker2.stats() == default_stats);
+        }
+
+        SECTION("assigned non-trivial IDs") {
+            REQUIRE(default_tracker.id() != 0);
+            REQUIRE(default_tracker2.id() != 0);
+        }
+    }
+
     auto stats = std::make_shared<instance_tracker_stats>();
 
     SECTION("tracks active instances") {
