@@ -19,16 +19,16 @@ class default_singleton_tag {};
 /**
  * @brief Returns a singleton instance of a type.
  *
- * This defines a common technique for contolling access to a single instance of
- * a type. On first invocation, the singleton type is constructed with its
- * default constructor. Following invocations return a reference to the same
- * instance.
+ * This function controlls access to a single instance of a type. On first
+ * invocation, the singleton object is constructed with its default constructor.
+ * Following invocations return a reference to the same instance.
  *
  * Once constructed, the singleton object remains alive for the duration of the
- * program. It cannot be destoyed earlier. This makes code that uses this
- * function fail unit-tests in unexpected ways, because the singleton object
- * cannot be "torn down" in between tests. Tests affecting the singleton's state
- * can inadvertently affect the results of subsequent tests.
+ * program. It cannot be destoyed earlier. This can cause unit-tests to fail in
+ * unexpected ways, because the singleton object cannot be "torn down" in
+ * between tests. Tests affecting the singleton's state can inadvertently affect
+ * the results of subsequent tests. For this reason, @ref
+ * reference_counted_singleton may be more appropriate for your use case.
  *
  * If a program wants to use multiple singletons of the same type, it can
  * distinguish between them using the `Tag` template parameter. Calls that use
