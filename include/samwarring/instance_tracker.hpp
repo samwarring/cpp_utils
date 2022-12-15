@@ -2,19 +2,21 @@
 #define INCLUDED_SAMWARRING_INSTANCE_TRACKER_HPP
 #include <cassert>
 #include <memory>
+#include <samwarring/singleton.hpp>
 #include <set>
 
 namespace samwarring {
 
 /**
- * Collects statistics of instance_tracker instances.
+ * @brief Collects statistics of instance_tracker instances.
  *
  * Objects of this structure are updated by the @ref instance_tracker class when
  * they are constructed, destroyed, assigned, and moved. See the @ref
  * instance_tracker class for more information.
  */
 struct instance_tracker_stats {
-    int instances{0};         /**< Number of active instances */
+    int instances{0};            /**< Number of active instances */
+    int default_constructors{0}; /**< Invocation count of default constructor */
     int main_constructors{0}; /**< Invocation count of the main constructor */
     int copy_constructors{0}; /**< Invocation count of the copy constructor */
     int move_constructors{0}; /**< Invocation count of the move constructor */
@@ -35,10 +37,8 @@ struct instance_tracker_stats {
     int next_id{1};
 };
 
-using shared_instance_tracker_stats = std::shared_ptr<instance_tracker_stats>;
-
 /**
- * Tracks lifetime behavior of elements in generic containers.
+ * @brief Tracks lifetime behavior of elements in generic containers.
  *
  * Generic containers tend to favor moves instead of copies where possible
  * to acheive greater performance. This class enables testing whether or not
@@ -55,14 +55,7 @@ using shared_instance_tracker_stats = std::shared_ptr<instance_tracker_stats>;
  * non-trivial object is moved-into, its ID is added to a separate set of
  * "evicted" IDs.
  *
- * Limitations
- * -----------
- *
- * 1. Each instance must be constructed with an explicit reference to the
- *    stats structure. There is no default constructor, as this would require
- *    the use of global state.
- *
- * 2. Modifications to the stats structure are not thread-safe.
+ * Modifications to the stats structure are not thread-safe.
  *
  * Example
  * -------
@@ -81,13 +74,31 @@ using shared_instance_tracker_stats = std::shared_ptr<instance_tracker_stats>;
 class instance_tracker {
   public:
     /**
-     * Constructs a new instance. The instance is assigned a new ID unique to
-     * the provided stats structure.
+     * @brief Construct a new default instance.
      *
-     * @param stats New instance lifetime events will be tracked in this object.
-     * It must not be null, or behavior is undefined.
+     * It records its lifetime events to a reference-counted singleton stats
+     * object. The singleton stats object can be pre-initialized before the
+     * construction is recorded via the @ref reference_counted_singleton
+     * function.
      */
-    instance_tracker(shared_instance_tracker_stats stats) noexcept
+    instance_tracker()
+        : stats_{reference_counted_singleton<instance_tracker_stats>()} {
+        assert(stats_);
+        id_ = stats_->next_id++;
+        stats_->instances++;
+        stats_->default_constructors++;
+        stats_->all_constructors++;
+    }
+
+    /**
+     * @brief Constructs a new instance.
+     *
+     * The instance is assigned a new ID unique to the provided stats structure.
+     *
+     * @param stats New instance lifetime events will be tracked in this
+     * object. It must not be null, or behavior is undefined.
+     */
+    instance_tracker(std::shared_ptr<instance_tracker_stats> stats) noexcept
         : stats_(std::move(stats)) {
         assert(stats_);
         id_ = stats_->next_id++;
@@ -97,9 +108,10 @@ class instance_tracker {
     }
 
     /**
-     * Constructs a new instance via copy. The new instance is assigned a new ID
-     * unique to the shared stats structure. It does NOT copy the ID of the
-     * other instance.
+     * @brief Constructs a new instance via copy.
+     *
+     * The new instance is assigned a new ID unique to the shared stats
+     * structure. It does NOT copy the ID of the other instance.
      *
      * @param other Instance to copy. Its stats structure is shared by the new
      * instance. Its ID is not modified.
@@ -113,7 +125,7 @@ class instance_tracker {
     }
 
     /**
-     * Constructs a new instance via move.
+     * @brief Constructs a new instance via move.
      *
      * @param other Moved-from instance. Its stats structure is shared with the
      * new instance. Its ID is moved into the new instance, then set to 0.
@@ -128,7 +140,7 @@ class instance_tracker {
     }
 
     /**
-     * Destroys an instance.
+     * @brief Destroys an instance.
      *
      * The destruction is recorded in the stats structure. If this instance's ID
      * is non-trivial, the ID is added to the set of destroyed IDs.
@@ -142,9 +154,10 @@ class instance_tracker {
     }
 
     /**
-     * Tracks a copy-assignment between instances. The IDs of both instances are
-     * not modified. It is assumed both instances share the same stats
-     * structure.
+     * @brief Tracks a copy-assignment between instances.
+     *
+     * The IDs of both instances are not modified. It is assumed both instances
+     * share the same stats structure.
      *
      * @param other Instance to copy.
      */
@@ -157,10 +170,12 @@ class instance_tracker {
     }
 
     /**
-     * Tracks a move-assignment between instances. If the current instance has a
-     * non-trivial ID, it's added to the set of evicted IDs. Then the ID of the
-     * other instance is moved into the current instance, setting the other to
-     * 0. It is assumed both instances share the same stats structure.
+     * @brief Tracks a move-assignment between instances.
+     *
+     * If the current instance has a non-trivial ID, it's added to the set of
+     * evicted IDs. Then the ID of the other instance is moved into the current
+     * instance, setting the other to 0. It is assumed both instances share the
+     * same stats structure.
      *
      * @param other Moved-from instance.
      */
@@ -188,12 +203,12 @@ class instance_tracker {
      * @return Stats structure where this instance's lifetime events are
      * recorded.
      */
-    shared_instance_tracker_stats stats() const noexcept {
+    std::shared_ptr<instance_tracker_stats> stats() const noexcept {
         return stats_;
     }
 
   private:
-    shared_instance_tracker_stats stats_;
+    std::shared_ptr<instance_tracker_stats> stats_;
     int id_;
 };
 
