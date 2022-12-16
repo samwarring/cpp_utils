@@ -146,7 +146,7 @@ class ring_buffer {
     template <class U>
     class iterator_base {
       public:
-        using iterator_category = std::bidirectional_iterator_tag;
+        using iterator_category = std::random_access_iterator_tag;
         using difference_type = std::ptrdiff_t;
         using value_type = std::remove_const_t<U>;
         using pointer = U*;
@@ -190,6 +190,77 @@ class ring_buffer {
             return tmp;
         }
 
+        iterator_base<U> operator+(difference_type offset) const noexcept {
+            auto tmp = *this;
+            tmp.adjust(offset);
+            return tmp;
+        }
+
+        iterator_base<U> operator-(difference_type offset) const noexcept {
+            auto tmp = *this;
+            tmp.adjust(-offset);
+            return tmp;
+        }
+
+        iterator_base<U>& operator+=(difference_type offset) noexcept {
+            adjust(offset);
+            return *this;
+        }
+
+        iterator_base<U>& operator-=(difference_type offset) noexcept {
+            adjust(-offset);
+            return *this;
+        }
+
+        difference_type operator-(const iterator_base<U> other) const noexcept {
+            assert(data_begin_ == other.data_begin_);
+            if (rollover_ == other.rollover_) {
+                return pos_ - other.pos_;
+            } else if (rollover_) {
+                // this is ahead of other
+                return (pos_ - data_begin_) + (data_end_ - other.pos_);
+            } else {
+                // other is ahead of this
+                return (other.pos_ - data_begin_) - (data_end_ - pos_);
+            }
+        }
+
+        bool operator<(const iterator_base<U> other) const noexcept {
+            if (rollover_ == other.rollover_) {
+                return pos_ < other.pos_;
+            } else {
+                return other.rollover_;
+            }
+        }
+
+        bool operator<=(const iterator_base<U> other) const noexcept {
+            if (rollover_ == other.rollover_) {
+                return pos_ <= other.pos_;
+            } else {
+                return other.rollover_;
+            }
+        }
+
+        bool operator>(const iterator_base<U> other) const noexcept {
+            if (rollover_ == other.rollover_) {
+                return pos_ > other.pos_;
+            } else {
+                return rollover_;
+            }
+        }
+
+        bool operator>=(const iterator_base<U> other) const noexcept {
+            if (rollover_ == other.rollover_) {
+                return pos_ >= other.pos_;
+            } else {
+                return rollover_;
+            }
+        }
+
+        U& operator[](difference_type offset) const noexcept {
+            return *(*this + offset);
+        }
+
       private:
         friend class ring_buffer<T>;
 
@@ -197,7 +268,12 @@ class ring_buffer {
             : pos_{pos}, data_begin_{data_begin}, data_end_{data_begin + size},
               rollover_{rollover} {}
 
+        difference_type size() const noexcept {
+            return data_end_ - data_begin_;
+        }
+
         void increment() noexcept {
+            assert(pos_ != data_end_);
             if (++pos_ == data_end_) {
                 pos_ = data_begin_;
                 rollover_ = true;
@@ -205,10 +281,31 @@ class ring_buffer {
         }
 
         void decrement() noexcept {
+            assert((pos_ != data_begin_) || rollover_);
             if (pos_ == data_begin_) {
                 pos_ = data_end_;
+                rollover_ = false;
             }
             --pos_;
+        }
+
+        void adjust(difference_type offset) noexcept {
+            if (offset > 0) {
+                pos_ += offset;
+                if (pos_ >= data_end_) {
+                    rollover_ = true;
+                    auto new_index = (pos_ - data_end_) % size();
+                    pos_ = data_begin_ + new_index;
+                }
+            } else if (offset < 0) {
+                pos_ += offset; // add a negative: subtraction
+                if (pos_ < data_begin_) {
+                    rollover_ = false;
+                    auto new_index_from_end = (data_begin_ - pos_) % size();
+                    pos_ = data_end_ - new_index_from_end;
+                }
+            }
+            // else (offset == 0): no change
         }
 
         U* pos_;

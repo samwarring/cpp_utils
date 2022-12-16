@@ -19,11 +19,6 @@ TEST_CASE("ring buffer") {
         REQUIRE(buf[2] == 1);
         REQUIRE(buf[3] == 2);
 
-        SECTION("iteration") {
-            std::vector<int> expected{0, 0, 1, 2};
-            REQUIRE(std::equal(buf.begin(), buf.end(), expected.begin()));
-        }
-
         SECTION("modification") {
             buf.front() = 10;
             buf[1] = 20;
@@ -150,5 +145,89 @@ TEST_CASE("const ring buffer") {
     SECTION("iteration") {
         std::vector<int> expected{1, 2, 3, 4};
         REQUIRE(std::equal(cbuf.begin(), cbuf.end(), expected.begin()));
+    }
+}
+
+TEST_CASE("ring buffer iterator") {
+    ring_buffer<int> buf{4};
+    buf.push_back(1);
+    buf.push_back(2);
+    buf.push_back(3);
+    buf.push_back(4);
+    buf.push_back(5);
+    std::vector<int> expected{2, 3, 4, 5};
+    std::vector<int> expected_rev{5, 4, 3, 2};
+
+    SECTION("forward traversal") {
+        REQUIRE(std::equal(buf.begin(), buf.end(), expected.begin(),
+                           expected.end()));
+    }
+
+    SECTION("backward traversal") {
+        std::vector<int> actual;
+        auto it = buf.end();
+        while (it != buf.begin()) {
+            --it;
+            actual.push_back(*it);
+        }
+        REQUIRE(std::equal(actual.begin(), actual.end(), expected_rev.begin(),
+                           expected_rev.end()));
+    }
+
+    SECTION("std::reverse") {
+        std::reverse(buf.begin(), buf.end());
+        REQUIRE(std::equal(buf.begin(), buf.end(), expected_rev.begin(),
+                           expected_rev.end()));
+    }
+
+    SECTION("adjust by offset") {
+        REQUIRE(buf.begin() + buf.size() == buf.end());
+        REQUIRE(buf.end() - buf.size() == buf.begin());
+        auto it = buf.begin(); // [(2), 3, 4, 5]
+        it += 2;               // [2, 3, (4), 5]
+        REQUIRE(*it == 4);
+        it += 1; // [2, 3, 4, (5)]
+        REQUIRE(*it == 5);
+        it -= 2; // [2, (3), 4, 5]
+        REQUIRE(*it == 3);
+        REQUIRE(*(it + 0) == 3);
+        REQUIRE(*(it - 0) == 3);
+        it += 0;
+        REQUIRE(*it == 3);
+        it -= 0;
+        REQUIRE(*it == 3);
+    }
+
+    SECTION("iterator difference") {
+        REQUIRE(buf.begin() - buf.begin() == 0);
+        REQUIRE(buf.end() - buf.end() == 0);
+        auto it1 = buf.begin() + 1;
+        auto it3 = buf.begin() + 3;
+        REQUIRE(it1 - it3 == -2);
+        REQUIRE(it3 - it1 == 2);
+    }
+
+    SECTION("iterator comparison") {
+        REQUIRE(buf.begin() < buf.end());
+        REQUIRE(buf.begin() <= buf.end());
+        REQUIRE(buf.begin() <= buf.begin());
+        REQUIRE(buf.end() - 1 < buf.end());
+        REQUIRE(buf.end() > buf.begin());
+        REQUIRE(buf.end() >= buf.begin());
+        REQUIRE(buf.end() >= buf.end());
+    }
+
+    SECTION("iterator indexing") {
+        auto it = buf.begin();
+        REQUIRE(it[0] == 2);
+        REQUIRE(it[1] == 3);
+        REQUIRE(it[2] == 4);
+        REQUIRE(it[3] == 5);
+
+        auto it2 = buf.end();
+        REQUIRE(it[-1] == 5);
+        REQUIRE(it[-2] == 4);
+        REQUIRE(it[-3] == 3);
+        REQUIRE(it[-4] == 2);
     }
 }
