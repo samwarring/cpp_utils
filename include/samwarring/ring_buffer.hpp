@@ -54,18 +54,18 @@ class ring_buffer {
      * are useless unless they are assigned the contents of another ring_buffer
      * instance.
      */
-    ring_buffer() noexcept : data_{nullptr}, capacity_{0}, next_{0} {}
+    ring_buffer() noexcept : data_{nullptr}, size_{0}, next_{0} {}
 
     /**
      * Main constructor.
      *
-     * Constructs a new ring buffer with `capacity` items. All items are
+     * Constructs a new ring buffer with `size` items. All items are
      * default-constructed.
      *
-     * @param capacity Number of items in the buffer
+     * @param size Number of items in the buffer
      */
-    ring_buffer(std::size_t capacity)
-        : data_{new T[capacity]()}, capacity_{capacity}, next_{0} {}
+    ring_buffer(std::size_t size)
+        : data_{new T[size]()}, size_{size}, next_{0} {}
 
     /**
      * Copy constructor.
@@ -77,9 +77,8 @@ class ring_buffer {
      * @param other The original buffer.
      */
     ring_buffer(const ring_buffer<T>& other)
-        : data_{new T[other.capacity_]()}, capacity_{other.capacity_},
-          next_{other.next_} {
-        std::copy(other.data_, other.data_ + capacity_, data_);
+        : data_{new T[other.size_]()}, size_{other.size_}, next_{other.next_} {
+        std::copy(other.data_, other.data_ + size_, data_);
     }
 
     /**
@@ -87,14 +86,14 @@ class ring_buffer {
      *
      * Constructs a ring buffer by stealing the contents from an existing one.
      * The moved-from buffer becomes an empty buffer with no data and no
-     * capacity.
+     * size.
      *
      * @param other
      */
     ring_buffer(ring_buffer<T>&& other)
-        : data_{other.data_}, capacity_{other.capacity_}, next_{other.next_} {
+        : data_{other.data_}, size_{other.size_}, next_{other.next_} {
         other.data_ = nullptr;
-        other.capacity_ = 0;
+        other.size_ = 0;
         other.next_ = 0;
     }
     /**
@@ -110,13 +109,13 @@ class ring_buffer {
         delete[] data_;
     }
 
-    std::size_t capacity() const noexcept {
-        return capacity_;
+    std::size_t size() const noexcept {
+        return size_;
     }
 
     void push_back(T item) noexcept(std::is_nothrow_move_assignable<T>::value) {
         data_[next_] = std::move(item);
-        next_ = (next_ + 1) % capacity_;
+        next_ = (next_ + 1) % size_;
     }
 
     T& operator[](std::size_t index) noexcept {
@@ -183,10 +182,9 @@ class ring_buffer {
       private:
         friend class ring_buffer<T>;
 
-        iterator_base(U* data_begin, std::size_t capacity, U* pos,
-                      bool rollover)
-            : pos_{pos}, data_begin_{data_begin},
-              data_end_{data_begin + capacity}, rollover_{rollover} {}
+        iterator_base(U* data_begin, std::size_t size, U* pos, bool rollover)
+            : pos_{pos}, data_begin_{data_begin}, data_end_{data_begin + size},
+              rollover_{rollover} {}
 
         void advance() noexcept {
             if (++pos_ == data_end_) {
@@ -208,19 +206,19 @@ class ring_buffer {
     using partial_iterator = T*;
 
     iterator begin() noexcept {
-        return iterator{data_, capacity_, data_ + front_index(), false};
+        return iterator{data_, size_, data_ + front_index(), false};
     }
 
     const_iterator begin() const noexcept {
-        return const_iterator{data_, capacity_, data_ + front_index(), false};
+        return const_iterator{data_, size_, data_ + front_index(), false};
     }
 
     iterator end() noexcept {
-        return iterator{data_, capacity_, data_ + front_index(), true};
+        return iterator{data_, size_, data_ + front_index(), true};
     }
 
     const_iterator end() const noexcept {
-        return const_iterator{data_, capacity_, data_ + front_index(), true};
+        return const_iterator{data_, size_, data_ + front_index(), true};
     }
 
     unordered_iterator unordered_begin() noexcept {
@@ -232,16 +230,16 @@ class ring_buffer {
     }
 
     unordered_iterator unordered_end() noexcept {
-        return data_ + capacity_;
+        return data_ + size_;
     }
 
     const_unordered_iterator unordered_end() const noexcept {
-        return data_ + capacity_;
+        return data_ + size_;
     }
 
     template <class F>
     void for_each(F callback) noexcept(std::is_nothrow_invocable_v<F, T&>) {
-        for (T* it = data_ + next_; it != data_ + capacity_; ++it) {
+        for (T* it = data_ + next_; it != data_ + size_; ++it) {
             callback(*it);
         }
         for (T* it = data_; it != data_ + next_; ++it) {
@@ -253,7 +251,7 @@ class ring_buffer {
     void for_each(F callback) const
         noexcept(std::is_nothrow_invocable_v<F, const T&>) {
 
-        for (const T* it = data_ + next_; it != data_ + capacity_; ++it) {
+        for (const T* it = data_ + next_; it != data_ + size_; ++it) {
             callback(*it);
         }
         for (const T* it = data_; it != data_ + next_; ++it) {
@@ -267,15 +265,15 @@ class ring_buffer {
     }
 
     std::size_t back_index() const noexcept {
-        return (next_ == 0 ? capacity_ - 1 : next_ - 1);
+        return (next_ == 0 ? size_ - 1 : next_ - 1);
     }
 
     std::size_t nth_index(std::size_t index) const noexcept {
-        return (next_ + index) % capacity_;
+        return (next_ + index) % size_;
     }
 
     T* data_;
-    std::size_t capacity_;
+    std::size_t size_;
     std::size_t next_;
 };
 
