@@ -53,6 +53,13 @@ TEST_CASE("ring buffer") {
             REQUIRE(std::equal(buf.begin(), buf.end(), expected.begin()));
         }
 
+        SECTION("bidirectional iteration") {
+            auto it = buf.begin();
+            REQUIRE(*it == 2);
+            REQUIRE(*(--it) == 5);
+            REQUIRE(*(++it) == 2);
+        }
+
         SECTION("unordered iteration") {
             std::set<int> expected{2, 3, 4, 5};
             std::set<int> actual{buf.unordered_begin(), buf.unordered_end()};

@@ -146,7 +146,7 @@ class ring_buffer {
     template <class U>
     class iterator_base {
       public:
-        using iterator_category = std::forward_iterator_tag;
+        using iterator_category = std::bidirectional_iterator_tag;
         using difference_type = std::ptrdiff_t;
         using value_type = std::remove_const_t<U>;
         using pointer = U*;
@@ -169,13 +169,24 @@ class ring_buffer {
         }
 
         iterator_base<U>& operator++() noexcept {
-            advance();
+            increment();
             return *this;
         }
 
         iterator_base<U> operator++(int) noexcept {
             auto tmp = *this;
-            advance();
+            increment();
+            return tmp;
+        }
+
+        iterator_base<U>& operator--() noexcept {
+            decrement();
+            return *this;
+        }
+
+        iterator_base<U> operator--(int) noexcept {
+            auto tmp = *this;
+            decrement();
             return tmp;
         }
 
@@ -186,11 +197,18 @@ class ring_buffer {
             : pos_{pos}, data_begin_{data_begin}, data_end_{data_begin + size},
               rollover_{rollover} {}
 
-        void advance() noexcept {
+        void increment() noexcept {
             if (++pos_ == data_end_) {
                 pos_ = data_begin_;
                 rollover_ = true;
             }
+        }
+
+        void decrement() noexcept {
+            if (pos_ == data_begin_) {
+                pos_ = data_end_;
+            }
+            --pos_;
         }
 
         U* pos_;
