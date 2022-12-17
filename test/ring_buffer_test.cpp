@@ -1,5 +1,7 @@
 #include <catch2/catch.hpp>
+#include <samwarring/instance_tracker.hpp>
 #include <samwarring/ring_buffer.hpp>
+#include <samwarring/singleton.hpp>
 #include <set>
 #include <string>
 #include <vector>
@@ -105,6 +107,25 @@ TEST_CASE("ring buffer") {
             REQUIRE(buf2[1] == 3);
             REQUIRE(buf2[2] == 4);
             REQUIRE(buf2[3] == 5);
+        }
+
+        SECTION("copy assignment") {
+            ring_buffer<int> buf2{6};
+            buf = buf2;
+            REQUIRE(buf.size() == 6);
+            REQUIRE(buf2.size() == 6);
+            buf[0] = 10;
+            buf2[0] = 20;
+            REQUIRE(buf[0] == 10);
+            REQUIRE(buf2[0] == 20);
+        }
+
+        SECTION("move assignment") {
+            ring_buffer<int> buf2{7};
+            buf2[0] = 123;
+            buf = std::move(buf2);
+            REQUIRE(buf.size() == 7);
+            REQUIRE(buf[0] == 123);
         }
     }
 }
@@ -229,5 +250,44 @@ TEST_CASE("ring buffer iterator") {
         REQUIRE(it[-2] == 4);
         REQUIRE(it[-3] == 3);
         REQUIRE(it[-4] == 2);
+    }
+}
+
+TEST_CASE("ring buffer instance tracker") {
+    auto stats = reference_counted_singleton<instance_tracker_stats>();
+    ring_buffer<instance_tracker> buf{10};
+    std::set<int> ids;
+    buf.for_each([&](auto& tracker) { ids.insert(tracker.id()); });
+
+    SECTION("items initialized with default constructor") {
+        REQUIRE(stats->default_constructors == 10);
+        REQUIRE(stats->all_constructors == 10);
+        REQUIRE(stats->instances == 10);
+    }
+
+    SECTION("copy assignment") {
+        ring_buffer<instance_tracker> buf2{20};
+        REQUIRE(stats->instances == 30);
+        REQUIRE(stats->destructors == 0);
+        buf = buf2;
+
+        // Now, buf with 20, and buf2 with 20. The original 10 instances in buf
+        // were destroyed.
+        REQUIRE(stats->instances == 40);
+        REQUIRE(stats->destructors == 10);
+        REQUIRE(stats->destroyed_ids == ids);
+    }
+
+    SECTION("move assignment") {
+        ring_buffer<instance_tracker> buf2{100};
+        REQUIRE(stats->instances == 110);
+        REQUIRE(stats->destructors == 0);
+        buf = std::move(buf2);
+
+        // Now, buf with 100, buf2 with 0. The original 10 instances in buf were
+        // destroyed.
+        REQUIRE(stats->instances == 100);
+        REQUIRE(stats->destructors == 10);
+        REQUIRE(stats->destroyed_ids == ids);
     }
 }

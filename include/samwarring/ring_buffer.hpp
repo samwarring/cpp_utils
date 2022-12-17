@@ -109,6 +109,24 @@ class ring_buffer {
         delete[] data_;
     }
 
+    void swap(ring_buffer<T>& other) noexcept {
+        std::swap(data_, other.data_);
+        std::swap(size_, other.size_);
+        std::swap(next_, other.next_);
+    }
+
+    ring_buffer<T>& operator=(const ring_buffer<T>& other) {
+        ring_buffer<T> tmp{other};
+        swap(tmp);
+        return *this;
+    }
+
+    ring_buffer<T>& operator=(ring_buffer<T>&& other) noexcept {
+        ring_buffer<T> tmp{std::move(other)};
+        swap(tmp);
+        return *this;
+    }
+
     std::size_t size() const noexcept {
         return size_;
     }
