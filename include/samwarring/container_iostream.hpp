@@ -7,8 +7,10 @@
 #include <map>
 #include <ostream>
 #include <set>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace samwarring::container_iostream {
@@ -68,6 +70,36 @@ struct detail {
             return out;
         }
     };
+
+    class out_tuple {
+        template <typename T1, typename T2>
+        friend std::ostream& operator<<(std::ostream&,
+                                        const std::pair<T1, T2>&);
+        template <typename... Ts>
+        friend std::ostream& operator<<(std::ostream&,
+                                        const std::tuple<Ts...>&);
+
+        template <std::size_t N, class Cont>
+        static std::ostream& out(std::ostream& out, const Cont& container) {
+            out << '(';
+            out_items<Cont, N, 0>(out, container);
+            out << ')';
+            return out;
+        }
+
+        template <class Cont, std::size_t Max, std::size_t Index>
+        static void out_items(std::ostream& out, const Cont& container) {
+            if constexpr (Index == Max) {
+                // Do nothing
+            } else if constexpr (Index == 0) {
+                out << std::get<0>(container);
+                out_items<Cont, Max, 1>(out, container);
+            } else if constexpr (Index < Max) {
+                out << ", " << std::get<Index>(container);
+                out_items<Cont, Max, Index + 1>(out, container);
+            }
+        }
+    };
 };
 
 template <typename T>
@@ -111,6 +143,18 @@ template <typename Key, typename Val>
 std::ostream& operator<<(std::ostream& out,
                          const std::unordered_map<Key, Val>& container) {
     return detail::out_map::out(out, container);
+}
+
+template <typename T1, typename T2>
+std::ostream& operator<<(std::ostream& out,
+                         const std::pair<T1, T2>& container) {
+    return detail::out_tuple::out<2>(out, container);
+}
+
+template <typename... Ts>
+std::ostream& operator<<(std::ostream& out,
+                         const std::tuple<Ts...>& container) {
+    return detail::out_tuple::out<sizeof...(Ts)>(out, container);
 }
 
 } // namespace samwarring::container_iostream

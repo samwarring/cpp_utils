@@ -215,4 +215,53 @@ SCENARIO("Containers can be formatted with ostream") {
             }
         }
     }
+
+    // std::pair
+    GIVEN("A pair of ints: (1, 2)") {
+        std::pair<int, int> v{1, 2};
+        WHEN("The pair is formatted") {
+            out << v;
+            THEN("The result is '(1, 2)'") {
+                REQUIRE(out.str() == "(1, 2)");
+            }
+        }
+    }
+    GIVEN("A pair of int-string: (42, 'the answer')") {
+        std::pair<int, std::string> v{42, "the answer"};
+        WHEN("The pair is formatted") {
+            out << v;
+            THEN("The result is '(42, the answer)'") {
+                REQUIRE(out.str() == "(42, the answer)");
+            }
+        }
+    }
+
+    // std::tuple
+    GIVEN("An empty tuple") {
+        std::tuple<> v;
+        WHEN("The tuple is formatted") {
+            out << v;
+            THEN("The result is '()'") {
+                REQUIRE(out.str() == "()");
+            }
+        }
+    }
+    GIVEN("A 1-tuple: ('hello')") {
+        std::tuple<std::string> v{"hello"};
+        WHEN("The tuple is formatted") {
+            out << v;
+            THEN("The result is '(hello)'") {
+                REQUIRE(out.str() == "(hello)");
+            }
+        }
+    }
+    GIVEN("A 3-tuple: (-1, \"hello\", 'x')") {
+        std::tuple<int, std::string, char> v{-1, "hello", 'x'};
+        WHEN("The tuple is formatted") {
+            out << v;
+            THEN("The result is '(-1, hello, x)") {
+                REQUIRE(out.str() == "(-1, hello, x)");
+            }
+        }
+    }
 }
