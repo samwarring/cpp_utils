@@ -31,9 +31,9 @@ struct detail {
         template <typename T, std::size_t N>
         friend std::ostream& operator<<(std::ostream&, const std::array<T, N>&);
 
-        template <char BegChar, char EndChar, class Cont>
+        template <class Cont>
         static std::ostream& out(std::ostream& out, const Cont& container) {
-            out << BegChar;
+            out << '{';
             auto it = container.begin();
             auto end = container.end();
             if (it != end) {
@@ -42,7 +42,7 @@ struct detail {
                     out << ", " << *it;
                 }
             }
-            out << EndChar;
+            out << '}';
             return out;
         }
     };
@@ -81,9 +81,9 @@ struct detail {
 
         template <std::size_t N, class Cont>
         static std::ostream& out(std::ostream& out, const Cont& container) {
-            out << '(';
+            out << '{';
             out_items<Cont, N, 0>(out, container);
-            out << ')';
+            out << '}';
             return out;
         }
 
@@ -104,33 +104,33 @@ struct detail {
 
 template <typename T>
 std::ostream& operator<<(std::ostream& out, const std::vector<T>& container) {
-    return detail::out_seq::out<'[', ']'>(out, container);
+    return detail::out_seq::out(out, container);
 }
 
 template <typename T>
 std::ostream& operator<<(std::ostream& out, const std::list<T>& container) {
-    return detail::out_seq::out<'[', ']'>(out, container);
+    return detail::out_seq::out(out, container);
 }
 
 template <typename T>
 std::ostream& operator<<(std::ostream& out, const std::deque<T>& container) {
-    return detail::out_seq::out<'[', ']'>(out, container);
+    return detail::out_seq::out(out, container);
 }
 
 template <typename T>
 std::ostream& operator<<(std::ostream& out, const std::set<T>& container) {
-    return detail::out_seq::out<'{', '}'>(out, container);
+    return detail::out_seq::out(out, container);
 }
 
 template <typename T>
 std::ostream& operator<<(std::ostream& out,
                          const std::unordered_set<T>& container) {
-    return detail::out_seq::out<'{', '}'>(out, container);
+    return detail::out_seq::out(out, container);
 }
 
 template <typename T, std::size_t N>
 std::ostream& operator<<(std::ostream& out, const std::array<T, N>& container) {
-    return detail::out_seq::out<'[', ']'>(out, container);
+    return detail::out_seq::out(out, container);
 }
 
 template <typename Key, typename Val>

@@ -12,8 +12,8 @@ SCENARIO("Containers can be formatted with ostream") {
         std::vector<int> v;
         WHEN("The vector is formatted") {
             out << v;
-            THEN("The result is '[]'") {
-                REQUIRE(out.str() == "[]");
+            THEN("The result is '{}'") {
+                REQUIRE(out.str() == "{}");
             }
         }
     }
@@ -22,8 +22,8 @@ SCENARIO("Containers can be formatted with ostream") {
         v.push_back(20);
         WHEN("The vector is formatted") {
             out << v;
-            THEN("The result is '[20]'") {
-                REQUIRE(out.str() == "[20]");
+            THEN("The result is '{20}'") {
+                REQUIRE(out.str() == "{20}");
             }
         }
     }
@@ -31,8 +31,8 @@ SCENARIO("Containers can be formatted with ostream") {
         std::vector<int> v{1, 2, 3};
         WHEN("The vector is formatted") {
             out << v;
-            THEN("The result is '[1, 2, 3]'") {
-                REQUIRE(out.str() == "[1, 2, 3]");
+            THEN("The result is '{1, 2, 3}'") {
+                REQUIRE(out.str() == "{1, 2, 3}");
             }
         }
     }
@@ -42,8 +42,8 @@ SCENARIO("Containers can be formatted with ostream") {
         std::list<int> v;
         WHEN("The list is formatted") {
             out << v;
-            THEN("The result is '[]'") {
-                REQUIRE(out.str() == "[]");
+            THEN("The result is '{}'") {
+                REQUIRE(out.str() == "{}");
             }
         }
     }
@@ -52,8 +52,8 @@ SCENARIO("Containers can be formatted with ostream") {
         v.push_back(20);
         WHEN("The list is formatted") {
             out << v;
-            THEN("The result is '[20]'") {
-                REQUIRE(out.str() == "[20]");
+            THEN("The result is '{20}'") {
+                REQUIRE(out.str() == "{20}");
             }
         }
     }
@@ -61,8 +61,8 @@ SCENARIO("Containers can be formatted with ostream") {
         std::list<int> v{1, 2, 3};
         WHEN("The list is formatted") {
             out << v;
-            THEN("The result is '[1, 2, 3]'") {
-                REQUIRE(out.str() == "[1, 2, 3]");
+            THEN("The result is '{1, 2, 3}'") {
+                REQUIRE(out.str() == "{1, 2, 3}");
             }
         }
     }
@@ -72,8 +72,8 @@ SCENARIO("Containers can be formatted with ostream") {
         std::deque<int> v;
         WHEN("The deque is formatted") {
             out << v;
-            THEN("The result is '[]'") {
-                REQUIRE(out.str() == "[]");
+            THEN("The result is '{}'") {
+                REQUIRE(out.str() == "{}");
             }
         }
     }
@@ -82,8 +82,8 @@ SCENARIO("Containers can be formatted with ostream") {
         v.push_back(20);
         WHEN("The deque is formatted") {
             out << v;
-            THEN("The result is '[20]'") {
-                REQUIRE(out.str() == "[20]");
+            THEN("The result is '{20}'") {
+                REQUIRE(out.str() == "{20}");
             }
         }
     }
@@ -91,8 +91,8 @@ SCENARIO("Containers can be formatted with ostream") {
         std::deque<int> v{1, 2, 3};
         WHEN("The deque is formatted") {
             out << v;
-            THEN("The result is '[1, 2, 3]'") {
-                REQUIRE(out.str() == "[1, 2, 3]");
+            THEN("The result is '{1, 2, 3}'") {
+                REQUIRE(out.str() == "{1, 2, 3}");
             }
         }
     }
@@ -162,8 +162,8 @@ SCENARIO("Containers can be formatted with ostream") {
         std::array<int, 0> v;
         WHEN("The array is formatted") {
             out << v;
-            THEN("The result is '[]'") {
-                REQUIRE(out.str() == "[]");
+            THEN("The result is '{}'") {
+                REQUIRE(out.str() == "{}");
             }
         }
     }
@@ -171,8 +171,8 @@ SCENARIO("Containers can be formatted with ostream") {
         std::array<int, 1> v{20};
         WHEN("The array is formatted") {
             out << v;
-            THEN("The result is '[20]'") {
-                REQUIRE(out.str() == "[20]");
+            THEN("The result is '{20}'") {
+                REQUIRE(out.str() == "{20}");
             }
         }
     }
@@ -180,8 +180,8 @@ SCENARIO("Containers can be formatted with ostream") {
         std::array<int, 3> v{1, 2, 3};
         WHEN("The array is formatted") {
             out << v;
-            THEN("The result is '[1, 2, 3]'") {
-                REQUIRE(out.str() == "[1, 2, 3]");
+            THEN("The result is '{1, 2, 3}'") {
+                REQUIRE(out.str() == "{1, 2, 3}");
             }
         }
     }
@@ -197,8 +197,7 @@ SCENARIO("Containers can be formatted with ostream") {
         }
     }
     GIVEN("A map with one element: (20: 30)") {
-        std::map<int, int> v;
-        v[20] = 30;
+        std::map<int, int> v{{20, 30}};
         WHEN("The map is formatted") {
             out << v;
             THEN("The result is '{20: 30}'") {
@@ -221,8 +220,8 @@ SCENARIO("Containers can be formatted with ostream") {
         std::pair<int, int> v{1, 2};
         WHEN("The pair is formatted") {
             out << v;
-            THEN("The result is '(1, 2)'") {
-                REQUIRE(out.str() == "(1, 2)");
+            THEN("The result is '{1, 2}'") {
+                REQUIRE(out.str() == "{1, 2}");
             }
         }
     }
@@ -230,8 +229,8 @@ SCENARIO("Containers can be formatted with ostream") {
         std::pair<int, std::string> v{42, "the answer"};
         WHEN("The pair is formatted") {
             out << v;
-            THEN("The result is '(42, the answer)'") {
-                REQUIRE(out.str() == "(42, the answer)");
+            THEN("The result is '{42, the answer}'") {
+                REQUIRE(out.str() == "{42, the answer}");
             }
         }
     }
@@ -241,8 +240,8 @@ SCENARIO("Containers can be formatted with ostream") {
         std::tuple<> v;
         WHEN("The tuple is formatted") {
             out << v;
-            THEN("The result is '()'") {
-                REQUIRE(out.str() == "()");
+            THEN("The result is '{}'") {
+                REQUIRE(out.str() == "{}");
             }
         }
     }
@@ -250,17 +249,17 @@ SCENARIO("Containers can be formatted with ostream") {
         std::tuple<std::string> v{"hello"};
         WHEN("The tuple is formatted") {
             out << v;
-            THEN("The result is '(hello)'") {
-                REQUIRE(out.str() == "(hello)");
+            THEN("The result is '{hello}'") {
+                REQUIRE(out.str() == "{hello}");
             }
         }
     }
-    GIVEN("A 3-tuple: (-1, \"hello\", 'x')") {
+    GIVEN("A 3-tuple: (-1, 'hello', 'x')") {
         std::tuple<int, std::string, char> v{-1, "hello", 'x'};
         WHEN("The tuple is formatted") {
             out << v;
-            THEN("The result is '(-1, hello, x)") {
-                REQUIRE(out.str() == "(-1, hello, x)");
+            THEN("The result is '{-1, hello, x}'") {
+                REQUIRE(out.str() == "{-1, hello, x}");
             }
         }
     }
