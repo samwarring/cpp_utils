@@ -138,6 +138,7 @@ struct detail {
                         return in;
                     } else {
                         // No close character or separator required. All done!
+                        in.clear(in.rdstate() ^ std::ios_base::failbit);
                         container = std::move(dst);
                         return in;
                     }

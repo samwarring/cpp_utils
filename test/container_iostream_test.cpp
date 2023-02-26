@@ -422,4 +422,56 @@ SCENARIO("Containers can be parsed from istream") {
             }
         }
     }
+
+    GIVEN("An input string representing an empty vector") {
+        std::string input_string =
+            GENERATE("[]", "{}", "()", "<>", "  []", "  <  >  ");
+        CAPTURE(input_string);
+        std::istringstream in{input_string};
+        WHEN("A vector<int> is extracted") {
+            std::vector<int> v;
+            in >> v;
+            THEN("Parsing succeeds") {
+                REQUIRE(!in.fail());
+            }
+            THEN("The vector is empty") {
+                REQUIRE(v.empty());
+            }
+        }
+    }
+
+    GIVEN("An input string") {
+        std::string input_string =
+            GENERATE("1 2 3", "1, 2, 3", "1;2;3", "1 , 2 , 3", "1  ;2  ;3  ");
+        CAPTURE(input_string);
+        std::istringstream in(input_string);
+        WHEN("A vector<int> is extracted") {
+            std::vector<int> v;
+            in >> v;
+            THEN("Parsing succeeds") {
+                REQUIRE(!in.fail());
+            }
+            THEN("The vector contains: 1, 2, 3") {
+                std::vector<int> exp{1, 2, 3};
+                REQUIRE(v == exp);
+            }
+        }
+    }
+
+    GIVEN("An input string") {
+        std::string input_string =
+            GENERATE("[", "{ 1", "<1,", "( 1 hi", "{1, hi}");
+        CAPTURE(input_string);
+        std::istringstream in(input_string);
+        WHEN("A vector<int> is extracted") {
+            std::vector<int> v;
+            in >> v;
+            THEN("Parsing fails") {
+                REQUIRE(in.fail());
+            }
+            THEN("The vector is empty") {
+                REQUIRE(v.empty());
+            }
+        }
+    }
 }
