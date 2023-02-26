@@ -109,11 +109,16 @@ struct detail {
                             return in;
                         }
                     } else {
-                        // Failed to parse element, but no close char required.
-                        // There is no error. All done! (Remove fail-bit only)
-                        in.clear(in.rdstate() ^ std::ios_base::failbit);
-                        container = std::move(dst);
-                        return in;
+                        // Element not parsed, but no close char required.
+                        if (dst.empty()) {
+                            // Failed to parse a single element. Parsing fails.
+                            return in;
+                        } else {
+                            // Parsed some elements. Parsing succeeds.
+                            in.clear(in.rdstate() ^ std::ios_base::failbit);
+                            container = std::move(dst);
+                            return in;
+                        }
                     }
                 }
 

@@ -283,9 +283,9 @@ SCENARIO("Containers can be parsed from istream") {
         }
     }
     GIVEN("An input string representing the sequence 1 2 3") {
-        std::string input_string =
-            GENERATE("1 2 3", "1, 2, 3", "1;2;3", "1 , 2 , 3", "1  ;2  ;3  ",
-                     "[1,2,3]", "{1;2;3}", "< 1 2 3 >", "   (1  ,2  ,3  )");
+        std::string input_string = GENERATE(
+            "1 2 3", "1, 2, 3", "1;2;3", "1, 2, 3,", "1 , 2 , 3", "1  ;2  ;3  ",
+            "[1,2,3]", "{1;2;3}", "< 1 2 3 >", "   (1  ,2  ,3  )");
         CAPTURE(input_string);
         std::istringstream in(input_string);
         WHEN("A vector<int> is extracted") {
@@ -343,6 +343,45 @@ SCENARIO("Containers can be parsed from istream") {
                 THEN("The extracted string is \'foo\'") {
                     REQUIRE(following_string == "foo");
                 }
+            }
+        }
+    }
+    GIVEN("An open sequence interrupted by the string \'foo\'") {
+        std::string input_string =
+            GENERATE("1 2 foo", "1, 2, foo", "1 ;2 ;foo");
+        CAPTURE(input_string);
+        std::istringstream in(input_string);
+        WHEN("A vector<int> is extracted") {
+            std::vector<int> v;
+            in >> v;
+            THEN("Parsing succeeds") {
+                REQUIRE(in.good());
+            }
+            THEN("The vector contains the available sequence") {
+                std::vector<int> exp{1, 2};
+                REQUIRE(v == exp);
+            }
+            AND_WHEN("The following string is extracted") {
+                std::string following_string;
+                in >> following_string;
+                THEN("The follosing string is \'foo\'") {
+                    REQUIRE(following_string == "foo");
+                }
+            }
+        }
+    }
+    GIVEN("A string not containing any sequence of ints") {
+        std::string input_string = GENERATE("", "foo", "  foo");
+        CAPTURE(input_string);
+        std::istringstream in(input_string);
+        WHEN("A vector<int> is extracted") {
+            std::vector<int> v;
+            in >> v;
+            THEN("Parsing fails") {
+                REQUIRE(in.fail());
+            }
+            THEN("The vector is empty") {
+                REQUIRE(v.empty());
             }
         }
     }
