@@ -52,6 +52,8 @@ class detail {
     friend std::istream& operator>>(std::istream&, std::set<T>&);
     template <typename T>
     friend std::istream& operator>>(std::istream&, std::unordered_set<T>&);
+    template <typename T, std::size_t N>
+    friend std::istream& operator>>(std::istream&, std::array<T, N>&);
 
     template <class Cont>
     static std::ostream& write_sequence(std::ostream& out,
@@ -238,6 +240,166 @@ class detail {
             }
         }
     }
+
+    template <typename Elem, std::size_t ElemCount, class Container>
+    static std::istream& read_fixed_sequence(std::istream& in,
+                                             Container& container) {
+        enum class state {
+            begin,
+            end,
+            require_open,
+            require_open_or_elem,
+            determine_close,
+            require_close,
+            require_elem,
+            require_sep,
+            require_sep_or_close,
+            determine_sep,
+        };
+        state s = state::begin;
+        char ch = 0;
+        bool open_required = false;
+        char close_char = 0;
+        char sep_char = 0;
+        std::size_t elems_parsed = 0;
+        while (s != state::end) {
+            switch (s) {
+            case state::begin:
+                // Empty sequence requires braces. Non-empty sequence can start
+                // with brace, or with element.
+                if constexpr (ElemCount == 0) {
+                    s = state::require_open;
+                } else {
+                    s = state::require_open_or_elem;
+                }
+                break;
+            case state::require_open:
+                // Read an open brace. When determining the closing brace,
+                // should error if open brace was not parsed.
+                in >> ch;
+                if (!in) {
+                    s = state::end;
+                } else {
+                    open_required = true;
+                    s = state::determine_close;
+                }
+                break;
+            case state::require_open_or_elem:
+                // Read an open brace. When determining the closing brace, it's
+                // ok if no open brace was parsed.
+                in >> ch;
+                if (!in) {
+                    s = state::end;
+                } else {
+                    open_required = false;
+                    s = state::determine_close;
+                }
+                break;
+            case state::determine_close:
+                // Determine the matching closing brace for the parsed
+                // character. If char is not an open brace, that may be ok if
+                // the open was not required.
+                switch (ch) {
+                case '(': close_char = ')'; break;
+                case '[': close_char = ']'; break;
+                case '{': close_char = '}'; break;
+                case '<': close_char = '>'; break;
+                default:
+                    if (open_required) {
+                        in.setstate(std::ios_base::failbit);
+                        s = state::end;
+                        continue;
+                    } else {
+                        in.unget();
+                    }
+                }
+                if constexpr (ElemCount > 0) {
+                    s = state::require_elem;
+                } else {
+                    s = state::require_close;
+                }
+                break;
+            case state::require_close:
+                // A closing brace is required.
+                in >> ch;
+                if (in && ch != close_char) {
+                    in.setstate(std::ios_base::failbit);
+                }
+                s = state::end;
+                break;
+            case state::require_elem:
+                // At least one more element needs to be parsed.
+                in >> container[elems_parsed++];
+                if (in.fail()) {
+                    s = state::end;
+                } else if (in.eof()) {
+                    if (elems_parsed < ElemCount || close_char) {
+                        in.setstate(std::ios_base::failbit);
+                    }
+                    s = state::end;
+                } else {
+                    if (elems_parsed == ElemCount && !close_char) {
+                        s = state::end;
+                    } else if (elems_parsed == 1) {
+                        s = state::determine_sep;
+                    } else if (elems_parsed == ElemCount && !sep_char) {
+                        s = state::require_close;
+                    } else if (elems_parsed == ElemCount && sep_char) {
+                        s = state::require_sep_or_close;
+                    } else if (sep_char) {
+                        s = state::require_sep;
+                    } else {
+                        s = state::require_elem;
+                    }
+                }
+                break;
+            case state::determine_sep:
+                // After the first element, the separator must be determined.
+                in >> ch;
+                if (!in) {
+                    s = state::end;
+                } else {
+                    switch (ch) {
+                    case ',':
+                    case ';': sep_char = ch; break;
+                    default: sep_char = 0; in.unget();
+                    }
+                    if (elems_parsed == ElemCount) {
+                        s = state::require_close;
+                    } else {
+                        s = state::require_elem;
+                    }
+                }
+                break;
+            case state::require_sep:
+                // Midway through the sequence, the separator is established and
+                // is not empty. It must be present here.
+                in >> ch;
+                if (!in || ch != sep_char) {
+                    in.setstate(std::ios_base::failbit);
+                    s = state::end;
+                } else {
+                    s = state::require_elem;
+                }
+                break;
+            case state::require_sep_or_close:
+                // Parsed all elements. Both sep and close chars are not 0. The
+                // final element may or have a redundant trailing separator.
+                in >> ch;
+                if (!in) {
+                    s = state::end;
+                } else if (ch == sep_char) {
+                    s = state::require_close;
+                } else if (ch == close_char) {
+                    s = state::end;
+                } else {
+                    in.setstate(std::ios_base::failbit);
+                    s = state::end;
+                }
+            }
+        }
+        return in;
+    }
 };
 
 template <typename T>
@@ -318,6 +480,11 @@ std::istream& operator>>(std::istream& in, std::set<T>& container) {
 template <typename T>
 std::istream& operator>>(std::istream& in, std::unordered_set<T>& container) {
     return detail::read_dynamic_sequence<T>(in, container);
+}
+
+template <typename T, std::size_t N>
+std::istream& operator>>(std::istream& in, std::array<T, N>& container) {
+    return detail::read_fixed_sequence<T, N>(in, container);
 }
 
 } // namespace samwarring::container_iostream

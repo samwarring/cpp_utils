@@ -420,3 +420,162 @@ SCENARIO("Containers of containers can be parsed from istream") {
         }
     }
 }
+
+SCENARIO("std::array can be parsed from istream") {
+    GIVEN("An empty string") {
+        std::istringstream in;
+        WHEN("An array<int, 0> is parsed") {
+            std::array<int, 0> arr;
+            in >> arr;
+            THEN("Parsing fails") {
+                REQUIRE(in.fail());
+            }
+        }
+        WHEN("An array<int, 1> is parsed") {
+            std::array<int, 1> arr;
+            in >> arr;
+            THEN("Parsing fails") {
+                REQUIRE(in.fail());
+            }
+        }
+    }
+    GIVEN("A string representing an empty array") {
+        std::string input_string = GENERATE("[]", "{ }", " <> ", "  (  )");
+        CAPTURE(input_string);
+        std::istringstream in(input_string);
+        WHEN("An array<int, 0> is parsed") {
+            std::array<int, 0> arr;
+            in >> arr;
+            THEN("Parsing succeeds") {
+                REQUIRE(!in.fail());
+            }
+        }
+        WHEN("An array<int, 1> is parsed") {
+            std::array<int, 1> arr;
+            in >> arr;
+            THEN("Parsing fails") {
+                REQUIRE(in.fail());
+            }
+        }
+    }
+    GIVEN("A string representing a array with one value") {
+        std::string input_string =
+            GENERATE("42", "[42]", "{42,}", "< 42 ; >", "( 42 ,)", "[ 42, ]");
+        CAPTURE(input_string);
+        std::istringstream in(input_string);
+        WHEN("An array<int, 0> is parsed") {
+            std::array<int, 0> arr;
+            in >> arr;
+            THEN("Parsing fails") {
+                REQUIRE(in.fail());
+            }
+        }
+        WHEN("An array<int, 1> is parsed") {
+            std::array<int, 1> arr;
+            in >> arr;
+            THEN("Parsing succeeds") {
+                REQUIRE(!in.fail());
+            }
+            THEN("The array contains the parsed value") {
+                REQUIRE(arr[0] == 42);
+            }
+        }
+        WHEN("An array<int, 2> is parsed") {
+            std::array<int, 2> arr;
+            in >> arr;
+            THEN("Parsing fails") {
+                REQUIRE(in.fail());
+            }
+        }
+    }
+    GIVEN("A string representing an open array with 3 values and no trailing "
+          "separator") {
+        std::string input_string =
+            GENERATE("1 2 3", "1,2,3", "1, 2, 3", "1 ;2 ;3");
+        CAPTURE(input_string);
+        std::istringstream in(input_string);
+        WHEN("An array<int, 2> is parsed") {
+            std::array<int, 2> arr;
+            in >> arr;
+            THEN("Parsing succeeds") {
+                REQUIRE(!in.fail());
+            }
+            THEN("The array contains the first 2 values") {
+                REQUIRE(arr[0] == 1);
+                REQUIRE(arr[1] == 2);
+            }
+        }
+        WHEN("An array<int, 3> is parsed") {
+            std::array<int, 3> arr;
+            in >> arr;
+            THEN("Parsing succeeds") {
+                REQUIRE(!in.fail());
+            }
+            THEN("The array contains the values") {
+                REQUIRE(arr[0] == 1);
+                REQUIRE(arr[1] == 2);
+                REQUIRE(arr[2] == 3);
+            }
+            THEN("The stream is EOF") {
+                // Would not be the case if there is a trailing separator
+                REQUIRE(in.eof());
+            }
+        }
+        WHEN("An array<int, 4> is parsed") {
+            std::array<int, 4> arr;
+            in >> arr;
+            THEN("Parsing fails") {
+                REQUIRE(in.fail());
+            }
+            THEN("The array begins with the 3 parsed values") {
+                REQUIRE(arr[0] == 1);
+                REQUIRE(arr[1] == 2);
+                REQUIRE(arr[2] == 3);
+            }
+            THEN("The stream is EOF") {
+                REQUIRE(in.eof());
+            }
+        }
+    }
+    GIVEN("A string representing an enclosed array with 3 values") {
+        std::string input_string =
+            GENERATE("[1 2 3]", "{ 1,2,3 }", "<1, 2, 3>", "(1 ;2 ;3  )");
+        CAPTURE(input_string);
+        std::istringstream in(input_string);
+        WHEN("An array<int, 2> is parsed") {
+            std::array<int, 2> arr;
+            in >> arr;
+            THEN("Parsing fails") {
+                REQUIRE(in.fail());
+            }
+            THEN("The array contains the first 2 values") {
+                REQUIRE(arr[0] == 1);
+                REQUIRE(arr[1] == 2);
+            }
+        }
+        WHEN("An array<int, 3> is parsed") {
+            std::array<int, 3> arr;
+            in >> arr;
+            THEN("Parsing succeeds") {
+                REQUIRE(!in.fail());
+            }
+            THEN("The array contains the values") {
+                REQUIRE(arr[0] == 1);
+                REQUIRE(arr[1] == 2);
+                REQUIRE(arr[2] == 3);
+            }
+        }
+        WHEN("An array<int, 4> is parsed") {
+            std::array<int, 4> arr;
+            in >> arr;
+            THEN("Parsing fails") {
+                REQUIRE(in.fail());
+            }
+            THEN("The array begins with the 3 parsed values") {
+                REQUIRE(arr[0] == 1);
+                REQUIRE(arr[1] == 2);
+                REQUIRE(arr[2] == 3);
+            }
+        }
+    }
+}
