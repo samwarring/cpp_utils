@@ -69,6 +69,42 @@ class detail {
         return out;
     }
 
+    template <class Cont>
+    static std::ostream& write_map(std::ostream& out, const Cont& container) {
+        out << '{';
+        auto it = container.begin();
+        auto end = container.end();
+        if (it != end) {
+            out << it->first << ": " << it->second;
+            for (++it; it != end; ++it) {
+                out << ", " << it->first << ": " << it->second;
+            }
+        }
+        out << '}';
+        return out;
+    }
+
+    template <std::size_t N, class Cont>
+    static std::ostream& write_tuple(std::ostream& out, const Cont& container) {
+        out << '{';
+        write_tuple_items<Cont, N, 0>(out, container);
+        out << '}';
+        return out;
+    }
+
+    template <class Cont, std::size_t Max, std::size_t Index>
+    static void write_tuple_items(std::ostream& out, const Cont& container) {
+        if constexpr (Index == Max) {
+            // Do nothing
+        } else if constexpr (Index == 0) {
+            out << std::get<0>(container);
+            write_tuple_items<Cont, Max, 1>(out, container);
+        } else if constexpr (Index < Max) {
+            out << ", " << std::get<Index>(container);
+            write_tuple_items<Cont, Max, Index + 1>(out, container);
+        }
+    }
+
     template <typename Elem, class Cont>
     static std::istream& read_dynamic_sequence(std::istream& in,
                                                Cont& container) {
@@ -200,42 +236,6 @@ class detail {
             } else {
                 assert(sep_defined && ch == sep_char);
             }
-        }
-    }
-
-    template <class Cont>
-    static std::ostream& write_map(std::ostream& out, const Cont& container) {
-        out << '{';
-        auto it = container.begin();
-        auto end = container.end();
-        if (it != end) {
-            out << it->first << ": " << it->second;
-            for (++it; it != end; ++it) {
-                out << ", " << it->first << ": " << it->second;
-            }
-        }
-        out << '}';
-        return out;
-    }
-
-    template <std::size_t N, class Cont>
-    static std::ostream& write_tuple(std::ostream& out, const Cont& container) {
-        out << '{';
-        write_tuple_items<Cont, N, 0>(out, container);
-        out << '}';
-        return out;
-    }
-
-    template <class Cont, std::size_t Max, std::size_t Index>
-    static void write_tuple_items(std::ostream& out, const Cont& container) {
-        if constexpr (Index == Max) {
-            // Do nothing
-        } else if constexpr (Index == 0) {
-            out << std::get<0>(container);
-            write_tuple_items<Cont, Max, 1>(out, container);
-        } else if constexpr (Index < Max) {
-            out << ", " << std::get<Index>(container);
-            write_tuple_items<Cont, Max, Index + 1>(out, container);
         }
     }
 };
