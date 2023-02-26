@@ -272,7 +272,9 @@ SCENARIO("Containers can be parsed from istream") {
         CAPTURE(input_string);
         std::istringstream in{input_string};
         WHEN("A vector<int> is extracted") {
-            std::vector<int> v;
+            std::vector<int> v =
+                GENERATE(std::vector<int>{}, std::vector<int>{1, 2, 3});
+            CAPTURE(v);
             in >> v;
             THEN("Parsing succeeds") {
                 REQUIRE(!in.fail());
@@ -289,7 +291,9 @@ SCENARIO("Containers can be parsed from istream") {
         CAPTURE(input_string);
         std::istringstream in(input_string);
         WHEN("A vector<int> is extracted") {
-            std::vector<int> v;
+            std::vector<int> v =
+                GENERATE(std::vector<int>{}, std::vector<int>{7, 8, 9});
+            CAPTURE(v);
             in >> v;
             THEN("Parsing succeeds") {
                 REQUIRE(!in.fail());
