@@ -390,3 +390,33 @@ TEMPLATE_TEST_CASE("Scenario: Dynamic containers can be parsed from istream",
         }
     }
 }
+
+SCENARIO("Containers of containers can be parsed from istream") {
+    GIVEN("A complicated input string") {
+        std::string input_string{"[{1, 2, 3} {7 8 8 9} {-1; 0; 1}]"};
+        CAPTURE(input_string);
+        std::istringstream in(input_string);
+        WHEN("A vector<set<int>> is parsed") {
+            std::vector<std::set<int>> v;
+            in >> v;
+            THEN("Parsing succeeds") {
+                REQUIRE(!in.fail());
+            }
+            THEN("The vector contains 3 items") {
+                REQUIRE(v.size() == 3);
+                AND_THEN("The 0th set contains: 1, 2, 3") {
+                    std::set<int> exp{1, 2, 3};
+                    REQUIRE(v[0] == exp);
+                }
+                AND_THEN("The 1st set contains: 7, 8, 9") {
+                    std::set<int> exp{7, 8, 9};
+                    REQUIRE(v[1] == exp);
+                }
+                AND_THEN("The 2nd set contains: -1, 0, 1") {
+                    std::set<int> exp{-1, 0, 1};
+                    REQUIRE(v[2] == exp);
+                }
+            }
+        }
+    }
+}
