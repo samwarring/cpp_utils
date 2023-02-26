@@ -265,21 +265,22 @@ SCENARIO("Containers can be formatted to ostream") {
     }
 }
 
-SCENARIO("Containers can be parsed from istream") {
+TEMPLATE_TEST_CASE("Scenario: Dynamic containers can be parsed from istream",
+                   "", std::vector<int>, std::list<int>, std::set<int>,
+                   std::unordered_set<int>, std::deque<int>) {
     GIVEN("An input string representing an empty sequence") {
         std::string input_string =
             GENERATE("[]", "{}", "()", "<>", "  []", "  <  >  ");
         CAPTURE(input_string);
         std::istringstream in{input_string};
-        WHEN("A vector<int> is extracted") {
-            std::vector<int> v =
-                GENERATE(std::vector<int>{}, std::vector<int>{1, 2, 3});
+        WHEN("A container is extracted") {
+            TestType v = GENERATE(TestType{}, TestType{1, 2, 3});
             CAPTURE(v);
             in >> v;
             THEN("Parsing succeeds") {
                 REQUIRE(!in.fail());
             }
-            THEN("The vector is empty") {
+            THEN("The container is empty") {
                 REQUIRE(v.empty());
             }
         }
@@ -290,16 +291,15 @@ SCENARIO("Containers can be parsed from istream") {
             "[1,2,3]", "{1;2;3}", "< 1 2 3 >", "   (1  ,2  ,3  )");
         CAPTURE(input_string);
         std::istringstream in(input_string);
-        WHEN("A vector<int> is extracted") {
-            std::vector<int> v =
-                GENERATE(std::vector<int>{}, std::vector<int>{7, 8, 9});
+        WHEN("A container is extracted") {
+            TestType v = GENERATE(TestType{}, TestType{7, 8, 9});
             CAPTURE(v);
             in >> v;
             THEN("Parsing succeeds") {
                 REQUIRE(!in.fail());
             }
-            THEN("The vector contains: 1, 2, 3") {
-                std::vector<int> exp{1, 2, 3};
+            THEN("The container contains: 1, 2, 3") {
+                TestType exp{1, 2, 3};
                 REQUIRE(v == exp);
             }
         }
@@ -308,8 +308,8 @@ SCENARIO("Containers can be parsed from istream") {
         std::string input_string = GENERATE("[", "{1", "< 1,", "(1 2   ");
         CAPTURE(input_string);
         std::istringstream in(input_string);
-        WHEN("A vector<int> is extracted") {
-            std::vector<int> v;
+        WHEN("A container is extracted") {
+            TestType v;
             in >> v;
             THEN("Parsing fails") {
                 REQUIRE(in.fail());
@@ -317,7 +317,7 @@ SCENARIO("Containers can be parsed from istream") {
             THEN("The stream is EOF") {
                 REQUIRE(in.eof());
             }
-            THEN("The vector is empty") {
+            THEN("The container is empty") {
                 REQUIRE(v.empty());
             }
         }
@@ -328,8 +328,8 @@ SCENARIO("Containers can be parsed from istream") {
             GENERATE("[foo", "[1 foo", "[1, foo", "[1foo");
         CAPTURE(input_string);
         std::istringstream in(input_string);
-        WHEN("A vector<int> is extracted") {
-            std::vector<int> v;
+        WHEN("A container is extracted") {
+            TestType v;
             in >> v;
             THEN("Parsing fails") {
                 REQUIRE(in.fail());
@@ -337,7 +337,7 @@ SCENARIO("Containers can be parsed from istream") {
             THEN("The stream is not EOF") {
                 REQUIRE(!in.eof());
             }
-            THEN("The vector is empty") {
+            THEN("The container is empty") {
                 REQUIRE(v.empty());
             }
             AND_WHEN("The following string is extracted") {
@@ -355,14 +355,14 @@ SCENARIO("Containers can be parsed from istream") {
             GENERATE("1 2 foo", "1, 2, foo", "1 ;2 ;foo");
         CAPTURE(input_string);
         std::istringstream in(input_string);
-        WHEN("A vector<int> is extracted") {
-            std::vector<int> v;
+        WHEN("A container is extracted") {
+            TestType v;
             in >> v;
             THEN("Parsing succeeds") {
                 REQUIRE(in.good());
             }
-            THEN("The vector contains the available sequence") {
-                std::vector<int> exp{1, 2};
+            THEN("The container contains the available sequence") {
+                TestType exp{1, 2};
                 REQUIRE(v == exp);
             }
             AND_WHEN("The following string is extracted") {
@@ -378,13 +378,13 @@ SCENARIO("Containers can be parsed from istream") {
         std::string input_string = GENERATE("", "foo", "  foo");
         CAPTURE(input_string);
         std::istringstream in(input_string);
-        WHEN("A vector<int> is extracted") {
-            std::vector<int> v;
+        WHEN("A container is extracted") {
+            TestType v;
             in >> v;
             THEN("Parsing fails") {
                 REQUIRE(in.fail());
             }
-            THEN("The vector is empty") {
+            THEN("The container is empty") {
                 REQUIRE(v.empty());
             }
         }

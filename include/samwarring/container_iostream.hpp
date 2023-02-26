@@ -49,7 +49,15 @@ struct detail {
 
     class in_seq {
         template <typename T>
-        friend std::istream& operator>>(std::istream& in, std::vector<T>&);
+        friend std::istream& operator>>(std::istream&, std::vector<T>&);
+        template <typename T>
+        friend std::istream& operator>>(std::istream&, std::list<T>&);
+        template <typename T>
+        friend std::istream& operator>>(std::istream&, std::deque<T>&);
+        template <typename T>
+        friend std::istream& operator>>(std::istream&, std::set<T>&);
+        template <typename T>
+        friend std::istream& operator>>(std::istream&, std::unordered_set<T>&);
 
         template <typename Elem, class Cont>
         static std::istream& in(std::istream& in, Cont& container) {
@@ -123,7 +131,7 @@ struct detail {
                 }
 
                 // Parsed an element.
-                dst.emplace_back(std::move(element));
+                dst.insert(dst.end(), std::move(element));
 
                 if (sep_defined && !sep_char) {
                     // No separator required. Parse next element.
@@ -297,6 +305,26 @@ std::ostream& operator<<(std::ostream& out,
 
 template <typename T>
 std::istream& operator>>(std::istream& in, std::vector<T>& container) {
+    return detail::in_seq::in<T>(in, container);
+}
+
+template <typename T>
+std::istream& operator>>(std::istream& in, std::list<T>& container) {
+    return detail::in_seq::in<T>(in, container);
+}
+
+template <typename T>
+std::istream& operator>>(std::istream& in, std::deque<T>& container) {
+    return detail::in_seq::in<T>(in, container);
+}
+
+template <typename T>
+std::istream& operator>>(std::istream& in, std::set<T>& container) {
+    return detail::in_seq::in<T>(in, container);
+}
+
+template <typename T>
+std::istream& operator>>(std::istream& in, std::unordered_set<T>& container) {
     return detail::in_seq::in<T>(in, container);
 }
 
