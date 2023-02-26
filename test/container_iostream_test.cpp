@@ -4,7 +4,7 @@
 
 using namespace samwarring::container_iostream;
 
-SCENARIO("Containers can be formatted with ostream") {
+SCENARIO("Containers can be formatted to ostream") {
     std::ostringstream out;
 
     // std::vector
@@ -260,6 +260,165 @@ SCENARIO("Containers can be formatted with ostream") {
             out << v;
             THEN("The result is '{-1, hello, x}'") {
                 REQUIRE(out.str() == "{-1, hello, x}");
+            }
+        }
+    }
+}
+
+SCENARIO("Containers can be parsed from istream") {
+    GIVEN("An input string: {1, 2, 3}") {
+        std::istringstream in{"{1, 2, 3}"};
+        WHEN("A vector<int> is extracted") {
+            std::vector<int> v;
+            in >> v;
+            THEN("The stream state is good") {
+                REQUIRE(in.good());
+            }
+            THEN("The vector contains 3 items") {
+                REQUIRE(v.size() == 3);
+            }
+            THEN("The vector contains: 1, 2, 3") {
+                std::vector<int> exp{1, 2, 3};
+                REQUIRE(v == exp);
+            }
+        }
+    }
+    GIVEN("An input string: {}") {
+        std::istringstream in{"{}"};
+        WHEN("A vector<int> is extracted") {
+            std::vector<int> v;
+            in >> v;
+            THEN("The stream state is good") {
+                REQUIRE(in.good());
+            }
+            THEN("The vector is empty") {
+                REQUIRE(v.empty());
+            }
+        }
+    }
+    GIVEN("An input string: {    }") {
+        std::istringstream in{"{    }"};
+        WHEN("A vector<int> is extracted") {
+            std::vector<int> v;
+            in >> v;
+            THEN("The stream state is good") {
+                REQUIRE(in.good());
+            }
+            THEN("The vector is empty") {
+                REQUIRE(v.empty());
+            }
+        }
+    }
+    GIVEN("An un-terminated input string: {1, 2") {
+        std::istringstream in{"{1, 2"};
+        WHEN("A vector<int> initially containing elements is extracted") {
+            std::vector<int> v_init{9, 9, 9};
+            auto v = v_init;
+            in >> v;
+            THEN("The stream is in a failure state") {
+                REQUIRE(in.fail());
+            }
+            THEN("The stream is EOF") {
+                REQUIRE(in.eof());
+            }
+            THEN("The destination vector is not modified") {
+                REQUIRE(v == v_init);
+            }
+        }
+    }
+    GIVEN("An interrupted input string: {1, 2, new stuff...") {
+        std::istringstream in{"{1, 2, new stuff..."};
+        WHEN("A vector<int> initially containing elements is extracted") {
+            std::vector<int> v_init{9, 9, 9};
+            auto v = v_init;
+            in >> v;
+            THEN("The stream is in a failure state") {
+                REQUIRE(in.fail());
+            }
+            THEN("The destination vector is not modified") {
+                REQUIRE(v == v_init);
+            }
+            THEN("The stream is not EOF") {
+                REQUIRE(!in.eof());
+                AND_WHEN("The next string is extracted") {
+                    std::string s;
+                    in.clear();
+                    in >> s;
+                    THEN("It extracts the un-parsed token 'new'") {
+                        REQUIRE(s == "new");
+                    }
+                }
+            }
+        }
+    }
+
+    GIVEN("An input string: 1 2 3") {
+        std::istringstream in{"1 2 3"};
+        WHEN("A vector<int> is extracted") {
+            std::vector<int> v;
+            in >> v;
+            THEN("Parsing succeeded, but stream is EOF") {
+                REQUIRE(!in.fail());
+                REQUIRE(in.eof());
+            }
+            THEN("The vector contains 3 elements") {
+                REQUIRE(v.size() == 3);
+            }
+            THEN("The vector contains: 1, 2, 3") {
+                std::vector<int> exp{1, 2, 3};
+                REQUIRE(v == exp);
+            }
+        }
+    }
+
+    GIVEN("An input string: 1 2 three") {
+        std::istringstream in{"1 2 three"};
+        WHEN("A vector<int> is extracted") {
+            std::vector<int> v;
+            in >> v;
+            THEN("The stream is good") {
+                REQUIRE(in.good());
+            }
+            THEN("The vector contains: 1, 2") {
+                std::vector<int> exp{1, 2};
+                REQUIRE(v == exp);
+            }
+            AND_WHEN("The following string is extracted") {
+                std::string s;
+                in >> s;
+                THEN("The stream is eof, but not failed") {
+                    REQUIRE(in.eof());
+                    REQUIRE(!in.fail());
+                }
+                THEN("The extracted string is: three") {
+                    REQUIRE(s == "three");
+                }
+            }
+        }
+    }
+
+    GIVEN("An input string: [1, 2  3]") {
+        std::istringstream in{"[1, 2  3]"};
+        WHEN("A vector<int> is extracted") {
+            std::vector<int> v;
+            in >> v;
+            THEN("The extraction failed") {
+                // because the established separator ',' was not found.
+                REQUIRE(in.fail());
+            }
+            THEN("The stream is not EOF") {
+                REQUIRE(!in.eof());
+            }
+            THEN("The vector is not populated") {
+                REQUIRE(v.empty());
+            }
+            AND_WHEN("The following int is extracted") {
+                in.clear();
+                int i;
+                in >> i;
+                THEN("The extracted value is 3") {
+                    REQUIRE(i == 3);
+                }
             }
         }
     }

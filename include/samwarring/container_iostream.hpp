@@ -47,6 +47,138 @@ struct detail {
         }
     };
 
+    class in_seq {
+        template <typename T>
+        friend std::istream& operator>>(std::istream& in, std::vector<T>&);
+
+        template <typename Elem, class Cont>
+        static std::istream& in(std::istream& in, Cont& container) {
+            // Parse open brace. If no open brace, putback the char.
+            char open_char{0};
+            char close_char{0};
+            in >> open_char;
+            if (!in) {
+                return in;
+            }
+            switch (open_char) {
+            case '(': close_char = ')'; break;
+            case '{': close_char = '}'; break;
+            case '[': close_char = ']'; break;
+            case '<': close_char = '>'; break;
+            default: in.unget();
+            }
+
+            // Parse items into this temporary container.
+            Cont dst;
+
+            char sep_char{0};        // Maybe a ',' or ';'
+            bool sep_defined{false}; // Enabled when separator is decided.
+            for (;;) {
+                // Try to parse an element.
+                Elem element;
+                in >> element;
+
+                if (in.bad()) {
+                    // Internal error occurred. Nothing we can do.
+                    return in;
+                } else if (in.fail()) {
+                    // Element could not be parsed.
+                    if (close_char) {
+                        // Maybe we can parse a close character.
+                        in.clear();
+                        char ch{0};
+                        in >> ch;
+                        if (in.eof()) {
+                            // Required a close characater, but hit EOF. Parsing
+                            // failed.
+                            in.setstate(std::ios_base::failbit);
+                            return in;
+                        } else if (in.bad()) {
+                            // Internal error. Bail out.
+                            return in;
+                        }
+                        if (ch == close_char) {
+                            // Closed the container. All done!
+                            container = std::move(dst);
+                            return in;
+                        } else {
+                            // Unexpected close character, but found something
+                            // else. Parsing failed.
+                            in.unget();
+                            in.setstate(std::ios_base::failbit);
+                            return in;
+                        }
+                    } else {
+                        // Failed to parse element, but no close char required.
+                        // There is no error. All done! (Remove fail-bit only)
+                        in.clear(in.rdstate() ^ std::ios_base::failbit);
+                        container = std::move(dst);
+                        return in;
+                    }
+                }
+
+                // Parsed an element.
+                dst.emplace_back(std::move(element));
+
+                if (sep_defined && !sep_char) {
+                    // No separator required. Parse next element.
+                    continue;
+                }
+
+                char ch{0};
+                in >> ch;
+                if (in.bad()) {
+                    // Internal error. Bail out!
+                    return in;
+                }
+                if (in.eof()) {
+                    if (close_char) {
+                        // Unclosed container. Parsing failed.
+                        in.setstate(std::ios_base::failbit);
+                        return in;
+                    } else {
+                        // No close character or separator required. All done!
+                        container = std::move(dst);
+                        return in;
+                    }
+                }
+                assert(in.good());
+                if (sep_defined && ch != sep_char) {
+                    // Expected a separator, but found something else.
+                    if (!close_char) {
+                        // Container can end suddenly. Not an error, just
+                        // finished parsing.
+                        in.unget();
+                        container = std::move(dst);
+                        return in;
+                    } else if (ch == close_char) {
+                        // Parsed a closed container. All done!
+                        container = std::move(dst);
+                        return in;
+                    } else {
+                        // Expected a separator or close character, but found
+                        // neither.
+                        in.unget();
+                        in.setstate(std::ios_base::failbit);
+                        return in;
+                    }
+                } else if (!sep_defined) {
+                    // Expecting to detect the separator character.
+                    if (ch == ',' || ch == ';') {
+                        sep_char = ch;
+                    } else {
+                        // Not a valid separator. Must be part of the next
+                        // element. Assume no separator character.
+                        in.unget();
+                    }
+                    sep_defined = true;
+                } else {
+                    assert(sep_defined && ch == sep_char);
+                }
+            }
+        }
+    };
+
     class out_map {
         template <typename Key, typename Val>
         friend std::ostream& operator<<(std::ostream&,
@@ -155,6 +287,11 @@ template <typename... Ts>
 std::ostream& operator<<(std::ostream& out,
                          const std::tuple<Ts...>& container) {
     return detail::out_tuple::out<sizeof...(Ts)>(out, container);
+}
+
+template <typename T>
+std::istream& operator>>(std::istream& in, std::vector<T>& container) {
+    return detail::in_seq::in<T>(in, container);
 }
 
 } // namespace samwarring::container_iostream
