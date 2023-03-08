@@ -3,6 +3,8 @@
 
 #include <array>
 #include <deque>
+#include <functional>
+#include <istream>
 #include <list>
 #include <map>
 #include <ostream>
@@ -400,6 +402,242 @@ class detail {
         }
         return in;
     }
+
+    class parser {
+      private:
+        bool expect_open_{false};
+        bool expect_elem_{false};
+        bool expect_sep_{false};
+        bool expect_close_{false};
+        char sep_char_{false};
+        char close_char_{false};
+        bool done_{false};
+        bool result_{false};
+        bool sep_defined_{false};
+        std::size_t elem_count_{0};
+        bool is_array_{false};
+        std::size_t array_size_{0};
+
+      private:
+        void reset_expected() {
+            expect_open_ = false;
+            expect_elem_ = false;
+            expect_sep_ = false;
+            expect_close_ = false;
+        }
+
+      protected:
+        virtual void parse_element(std::istream& in) = 0;
+
+      public:
+        parser() = default;
+        parser(bool is_array, std::size_t array_size)
+            : is_array_{is_array}, array_size_{array_size} {}
+
+        void parse(std::istream& in) {
+            if (is_array_ && array_size_ == 0) {
+                expect_open_ = true;
+            } else {
+                expect_open_ = true;
+                expect_elem_ = true;
+            }
+            while (!done_) {
+                bool found_expected = false;
+                if (expect_open_) {
+                    found_expected = parse_open(in);
+                }
+                if (!found_expected && expect_sep_) {
+                    found_expected = parse_sep(in);
+                }
+                if (!found_expected && expect_close_) {
+                    found_expected = parse_close(in);
+                }
+                if (expect_elem_) {
+                    if (parse_elem(in)) {
+                        found_expected = true;
+                    } else if (found_expected) {
+                        in.clear(in.rdstate() & ~std::ios_base::failbit);
+                    }
+                }
+                if (!found_expected) {
+                    result_ = false;
+                    done_ = true;
+                }
+            }
+            if (result_) {
+                in.clear(in.rdstate() & ~std::ios_base::failbit);
+            } else {
+                in.setstate(std::ios_base::failbit);
+            }
+        }
+
+        bool parse_open(std::istream& in) {
+            char ch = 0;
+            in >> ch;
+            if (!in) {
+                return false;
+            }
+            switch (ch) {
+            case '(': close_char_ = ')'; break;
+            case '[': close_char_ = ']'; break;
+            case '{': close_char_ = '}'; break;
+            case '<': close_char_ = '>'; break;
+            default: in.unget(); return false;
+            }
+            reset_expected();
+            if (is_array_ && array_size_ == 0) {
+                expect_close_ = true;
+            } else if (is_array_) {
+                expect_elem_ = true;
+            } else {
+                expect_close_ = true;
+                expect_elem_ = true;
+            }
+            return true;
+        }
+
+        bool parse_elem(std::istream& in) {
+            parse_element(in);
+            if (in.fail()) {
+                return false;
+            }
+            reset_expected();
+            if (is_array_ && array_size_ == ++elem_count_ && !close_char_) {
+                result_ = true;
+                done_ = true;
+            } else {
+                expect_sep_ = true;
+                expect_close_ = true;
+            }
+            return true;
+        }
+
+        bool parse_close(std::istream& in) {
+            if (!close_char_) {
+                result_ = true;
+                done_ = true;
+                return true;
+            }
+            char ch = 0;
+            in >> ch;
+            if (!in) {
+                return false;
+            }
+            if (ch != close_char_) {
+                in.unget();
+                return false;
+            }
+            result_ = true;
+            done_ = true;
+            return true;
+        }
+
+        bool parse_sep(std::istream& in) {
+            if (!sep_defined_) {
+                char ch = 0;
+                in >> ch;
+                if (!in) {
+                    return false;
+                }
+                if (ch == ',' || ch == ';') {
+                    sep_char_ = ch;
+                } else {
+                    in.unget();
+                }
+                sep_defined_ = true;
+            } else if (sep_char_) {
+                char ch = 0;
+                in >> ch;
+                if (!in) {
+                    return false;
+                }
+                if (ch != sep_char_) {
+                    in.unget();
+                    return false;
+                }
+            }
+            reset_expected();
+            if (is_array_ && array_size_ == elem_count_) {
+                expect_close_ = true;
+            } else {
+                expect_close_ = true;
+                expect_elem_ = true;
+            }
+            return true;
+        }
+    };
+
+    template <typename Elem, class Container>
+    class sequence_parser : public parser {
+      private:
+        Container dst_;
+
+      public:
+        void parse(std::istream& in, Container& dst) {
+            parser::parse(in);
+            if (!in.fail()) {
+                dst = std::move(dst_);
+            }
+        }
+
+      private:
+        void parse_element(std::istream& in) override {
+            Elem e;
+            in >> e;
+            if (!in.fail()) {
+                dst_.insert(dst_.end(), std::move(e));
+            }
+        }
+    };
+
+    template <typename Elem>
+    class array_parser : public parser {
+      private:
+        Elem* dst_;
+
+      public:
+        array_parser(Elem* dst, std::size_t size)
+            : parser(true, size), dst_(dst) {}
+
+      private:
+        void parse_element(std::istream& in) override {
+            in >> *dst_;
+            if (!in.fail()) {
+                ++dst_;
+            }
+        }
+    };
+
+    template <typename KeyType, typename ValueType, class Container>
+    class map_parser : public parser {
+      public:
+        Container dest;
+
+      private:
+        void parse_element(std::istream& in) override {
+            std::pair<KeyType, ValueType> elem;
+            in >> elem.first;
+            if (!in) {
+                in.setstate(std::ios_base::failbit);
+                return;
+            }
+            char ch = 0;
+            in >> ch;
+            if (!in) {
+                return;
+            }
+            if (ch != ':') {
+                in.unget();
+                in.setstate(std::ios_base::failbit);
+                return;
+            }
+            in >> elem.second;
+            if (in.fail()) {
+                return;
+            }
+            dest.insert(dest.end(), std::move(elem));
+        }
+    };
 };
 
 template <typename T>
@@ -459,32 +697,44 @@ std::ostream& operator<<(std::ostream& out,
 
 template <typename T>
 std::istream& operator>>(std::istream& in, std::vector<T>& container) {
-    return detail::read_dynamic_sequence<T>(in, container);
+    detail::sequence_parser<T, std::vector<T>> psr;
+    psr.parse(in, container);
+    return in;
 }
 
 template <typename T>
 std::istream& operator>>(std::istream& in, std::list<T>& container) {
-    return detail::read_dynamic_sequence<T>(in, container);
+    detail::sequence_parser<T, std::list<T>> psr;
+    psr.parse(in, container);
+    return in;
 }
 
 template <typename T>
 std::istream& operator>>(std::istream& in, std::deque<T>& container) {
-    return detail::read_dynamic_sequence<T>(in, container);
+    detail::sequence_parser<T, std::deque<T>> psr;
+    psr.parse(in, container);
+    return in;
 }
 
 template <typename T>
 std::istream& operator>>(std::istream& in, std::set<T>& container) {
-    return detail::read_dynamic_sequence<T>(in, container);
+    detail::sequence_parser<T, std::set<T>> psr;
+    psr.parse(in, container);
+    return in;
 }
 
 template <typename T>
 std::istream& operator>>(std::istream& in, std::unordered_set<T>& container) {
-    return detail::read_dynamic_sequence<T>(in, container);
+    detail::sequence_parser<T, std::unordered_set<T>> psr;
+    psr.parse(in, container);
+    return in;
 }
 
 template <typename T, std::size_t N>
 std::istream& operator>>(std::istream& in, std::array<T, N>& container) {
-    return detail::read_fixed_sequence<T, N>(in, container);
+    detail::array_parser<T> psr(container.data(), N);
+    psr.parse(in);
+    return in;
 }
 
 } // namespace samwarring::container_iostream
