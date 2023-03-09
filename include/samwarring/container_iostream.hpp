@@ -56,6 +56,10 @@ class detail {
     friend std::istream& operator>>(std::istream&, std::unordered_set<T>&);
     template <typename T, std::size_t N>
     friend std::istream& operator>>(std::istream&, std::array<T, N>&);
+    template <typename K, typename V>
+    friend std::istream& operator>>(std::istream&, std::map<K, V>&);
+    template <typename K, typename V>
+    friend std::istream& operator>>(std::istream&, std::unordered_map<K, V>&);
 
     template <class Cont>
     static std::ostream& write_sequence(std::ostream& out,
@@ -615,8 +619,16 @@ class detail {
 
     template <typename KeyType, typename ValueType, class Container>
     class map_parser : public parser {
+      private:
+        Container dst_;
+
       public:
-        Container dest;
+        void parse(std::istream& in, Container& dst) {
+            parser::parse(in);
+            if (!in.fail()) {
+                dst = std::move(dst_);
+            }
+        }
 
       private:
         void parse_element(std::istream& in) override {
@@ -640,7 +652,7 @@ class detail {
             if (in.fail()) {
                 return;
             }
-            dest.insert(dest.end(), std::move(elem));
+            dst_.insert(dst_.end(), std::move(elem));
         }
     };
 };
@@ -739,6 +751,21 @@ template <typename T, std::size_t N>
 std::istream& operator>>(std::istream& in, std::array<T, N>& container) {
     detail::array_parser<T> psr(container.data(), N);
     psr.parse(in);
+    return in;
+}
+
+template <typename K, typename V>
+std::istream& operator>>(std::istream& in, std::map<K, V>& container) {
+    detail::map_parser<K, V, std::map<K, V>> psr;
+    psr.parse(in, container);
+    return in;
+}
+
+template <typename K, typename V>
+std::istream& operator>>(std::istream& in,
+                         std::unordered_map<K, V>& container) {
+    detail::map_parser<K, V, std::unordered_map<K, V>> psr;
+    psr.parse(in, container);
     return in;
 }
 

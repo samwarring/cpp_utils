@@ -579,3 +579,45 @@ SCENARIO("std::array can be parsed from istream") {
         }
     }
 }
+
+TEMPLATE_TEST_CASE("Scenario: Maps can be parsed from istream", "",
+                   (std::map<int, int>), (std::unordered_map<int, int>)) {
+    GIVEN("A string representing an empty map") {
+        std::string input_string = GENERATE("()", "[ ]", "{  }", "  <  >  ");
+        CAPTURE(input_string);
+        std::istringstream in{input_string};
+        WHEN("A map is parsed") {
+            TestType m;
+            in >> m;
+            THEN("Parsing succeeds") {
+                REQUIRE(!in.fail());
+            }
+            THEN("The parsed map is empty") {
+                REQUIRE(m.empty());
+            }
+        }
+    }
+    GIVEN("A map containing a single entry: {6: -42}") {
+        std::string input_string =
+            GENERATE("{6:-42}", "{ 6 : -42 }", "6:-42", "[6: -42,]");
+        CAPTURE(input_string);
+        std::istringstream in{input_string};
+        WHEN("A map is parsed") {
+            TestType m;
+            in >> m;
+            THEN("Parsing succeeds") {
+                REQUIRE(!in.fail());
+            }
+            THEN("The map contains 1 element") {
+                REQUIRE(m.size() == 1);
+                AND_THEN("The map contains a key for 6") {
+                    auto it = m.find(6);
+                    REQUIRE(it != m.end());
+                    AND_THEN("The key 6 maps to value -42") {
+                        REQUIRE(it->second == -42);
+                    }
+                }
+            }
+        }
+    }
+}
