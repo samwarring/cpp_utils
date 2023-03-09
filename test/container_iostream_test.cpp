@@ -167,7 +167,7 @@ SCENARIO("Containers can be formatted to ostream") {
             }
         }
     }
-    GIVEN("A array with one element: 20") {
+    GIVEN("An array with one element: 20") {
         std::array<int, 1> v{20};
         WHEN("The array is formatted") {
             out << v;
@@ -176,7 +176,7 @@ SCENARIO("Containers can be formatted to ostream") {
             }
         }
     }
-    GIVEN("A array with many elements: 1, 2, 3") {
+    GIVEN("An array with many elements: 1, 2, 3") {
         std::array<int, 3> v{1, 2, 3};
         WHEN("The array is formatted") {
             out << v;
@@ -458,7 +458,7 @@ SCENARIO("std::array can be parsed from istream") {
             }
         }
     }
-    GIVEN("A string representing a array with one value") {
+    GIVEN("A string representing an array with one value") {
         std::string input_string =
             GENERATE("42", "[42]", "{42,}", "< 42 ; >", "( 42 ,)", "[ 42, ]");
         CAPTURE(input_string);

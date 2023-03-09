@@ -502,9 +502,12 @@ class detail {
                 return false;
             }
             reset_expected();
-            if (is_array_ && array_size_ == ++elem_count_ && !close_char_) {
+            ++elem_count_;
+            if (is_array_ && elem_count_ == array_size_ && !close_char_) {
                 result_ = true;
                 done_ = true;
+            } else if (is_array_ && elem_count_ < array_size_) {
+                expect_sep_ = true;
             } else {
                 expect_sep_ = true;
                 expect_close_ = true;
@@ -557,8 +560,10 @@ class detail {
                 }
             }
             reset_expected();
-            if (is_array_ && array_size_ == elem_count_) {
+            if (is_array_ && elem_count_ == array_size_) {
                 expect_close_ = true;
+            } else if (is_array_ && elem_count_ < array_size_) {
+                expect_elem_ = true;
             } else {
                 expect_close_ = true;
                 expect_elem_ = true;
