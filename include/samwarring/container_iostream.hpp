@@ -113,6 +113,9 @@ class detail {
         }
     }
 
+    /**
+     * @brief Generalized parser for all containers.
+     */
     class parser {
       private:
         bool expect_open_{false};
@@ -137,6 +140,15 @@ class detail {
         }
 
       protected:
+        /**
+         * @brief Pure-virtual implementation for parsing a container element.
+         *
+         * @details Subclasses provide the implementation for this method
+         * because they each parse elements in slightly different ways.
+         * Sequences parse their elements into a temporary container; arrays
+         * parse their elements directly into the destination; and maps need to
+         * parse key-value pairs.
+         */
         virtual void parse_element(std::istream& in) = 0;
 
       public:
@@ -144,6 +156,16 @@ class detail {
         parser(bool is_array, std::size_t array_size)
             : is_array_{is_array}, array_size_{array_size} {}
 
+        /**
+         * @brief Parses the container from the input stream.
+         *
+         * @details The method has no return value, but the input stream's
+         * stream-state is updated accordingly. (e.g. If the container could not
+         * be parsed, the stream's failbit is set). The derived class must
+         * provide a method for retrieving the parsed container.
+         *
+         * @warning This method can not be called more than once.
+         */
         void parse(std::istream& in) {
             if (is_array_ && array_size_ == 0) {
                 expect_open_ = true;
@@ -282,12 +304,26 @@ class detail {
         }
     };
 
+    /**
+     * @brief Parser for dynamically-sized containers, including sets.
+     */
     template <typename Elem, class Container>
     class sequence_parser : public parser {
       private:
         Container dst_;
 
       public:
+        /**
+         * @brief Parses container from an input stream.
+         *
+         * @details The parser::parse method will parse values into an internal
+         * container. The user can then move this container into the desired
+         * result if the parsing is successful. This method is a wrapper around
+         * that use case.
+         *
+         * @param dst Destination container. If parsing fails, this container is
+         * not modified.
+         */
         void parse(std::istream& in, Container& dst) {
             parser::parse(in);
             if (!in.fail()) {
@@ -329,6 +365,17 @@ class detail {
         Container dst_;
 
       public:
+        /**
+         * @brief Parses container from an input stream.
+         *
+         * @details The parser::parse method will parse values into an internal
+         * container. The user can then move this container into the desired
+         * result if the parsing is successful. This method is a wrapper around
+         * that use case.
+         *
+         * @param dst Destination container. If parsing fails, this container is
+         * not modified.
+         */
         void parse(std::istream& in, Container& dst) {
             parser::parse(in);
             if (!in.fail()) {
