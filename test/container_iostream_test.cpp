@@ -621,3 +621,23 @@ TEMPLATE_TEST_CASE("Scenario: Maps can be parsed from istream", "",
         }
     }
 }
+
+SCENARIO("Pairs can be parsed from istream") {
+    GIVEN("A string representing a pair of ints: 1, 2") {
+        std::string input_string =
+            GENERATE("1, 2", " 1   2 ", "[1;2]", "1,2", "{1, 2}");
+        CAPTURE(input_string);
+        std::istringstream in(input_string);
+        WHEN("A pair<int,int> is parsed") {
+            std::pair<int, int> p;
+            in >> p;
+            THEN("Parsing succeeds") {
+                REQUIRE(!in.fail());
+            }
+            THEN("The pair contains: 1, 2") {
+                REQUIRE(p.first == 1);
+                REQUIRE(p.second == 2);
+            }
+        }
+    }
+}

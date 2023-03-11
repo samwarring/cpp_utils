@@ -60,6 +60,8 @@ class detail {
     friend std::istream& operator>>(std::istream&, std::map<K, V>&);
     template <typename K, typename V>
     friend std::istream& operator>>(std::istream&, std::unordered_map<K, V>&);
+    template <typename T1, typename T2>
+    friend std::istream& operator>>(std::istream&, std::pair<T1, T2>&);
 
     template <class Cont>
     static std::ostream& write_sequence(std::ostream& out,
@@ -128,8 +130,8 @@ class detail {
         bool result_{false};
         bool sep_defined_{false};
         std::size_t elem_count_{0};
-        bool is_array_{false};
-        std::size_t array_size_{0};
+        bool is_fixed_size_{false};
+        std::size_t fixed_size_{0};
 
       private:
         void reset_expected() {
@@ -153,8 +155,8 @@ class detail {
 
       public:
         parser() = default;
-        parser(bool is_array, std::size_t array_size)
-            : is_array_{is_array}, array_size_{array_size} {}
+        parser(bool is_fixed_size, std::size_t fixed_size)
+            : is_fixed_size_{is_fixed_size}, fixed_size_{fixed_size} {}
 
         /**
          * @brief Parses the container from the input stream.
@@ -167,7 +169,7 @@ class detail {
          * @warning This method can not be called more than once.
          */
         void parse(std::istream& in) {
-            if (is_array_ && array_size_ == 0) {
+            if (is_fixed_size_ && fixed_size_ == 0) {
                 expect_open_ = true;
             } else {
                 expect_open_ = true;
@@ -217,9 +219,9 @@ class detail {
             default: in.unget(); return false;
             }
             reset_expected();
-            if (is_array_ && array_size_ == 0) {
+            if (is_fixed_size_ && fixed_size_ == 0) {
                 expect_close_ = true;
-            } else if (is_array_) {
+            } else if (is_fixed_size_) {
                 expect_elem_ = true;
             } else {
                 expect_close_ = true;
@@ -235,10 +237,10 @@ class detail {
             }
             reset_expected();
             ++elem_count_;
-            if (is_array_ && elem_count_ == array_size_ && !close_char_) {
+            if (is_fixed_size_ && elem_count_ == fixed_size_ && !close_char_) {
                 result_ = true;
                 done_ = true;
-            } else if (is_array_ && elem_count_ < array_size_) {
+            } else if (is_fixed_size_ && elem_count_ < fixed_size_) {
                 expect_sep_ = true;
             } else {
                 expect_sep_ = true;
@@ -292,9 +294,9 @@ class detail {
                 }
             }
             reset_expected();
-            if (is_array_ && elem_count_ == array_size_) {
+            if (is_fixed_size_ && elem_count_ == fixed_size_) {
                 expect_close_ = true;
-            } else if (is_array_ && elem_count_ < array_size_) {
+            } else if (is_fixed_size_ && elem_count_ < fixed_size_) {
                 expect_elem_ = true;
             } else {
                 expect_close_ = true;
@@ -408,6 +410,73 @@ class detail {
             dst_.insert(dst_.end(), std::move(elem));
         }
     };
+
+    template <class... Ts>
+    class tuple_parser : public parser {
+      private:
+        std::tuple<Ts...> dst_;
+        std::size_t index_{0}; ///< Number of items succesfully parsed.
+
+      public:
+        tuple_parser() : parser(true, sizeof...(Ts)) {}
+
+        /**
+         * @brief Parses container from an input stream.
+         *
+         * @details The parser::parse method will parse values into an internal
+         * container. The user can then move this container into the desired
+         * result if the parsing is successful. This method is a wrapper around
+         * that use case.
+         *
+         * @param dst Destination container. If parsing fails, this container is
+         * not modified.
+         */
+        template <class TupleType>
+        void parse(std::istream& in, TupleType& dst) {
+            parser::parse(in);
+            if (!in.fail()) {
+                store(dst);
+            }
+        };
+
+      private:
+        /**
+         * @brief Moves elements from internal tuple into destination
+         *
+         * @tparam TupleType can be std::tuple<...> or std::pair<...>
+         * @tparam ItemIndex Items from this index onwards will be stored into
+         * the destination. To store all items, pass 0.
+         * @param dst Store items from internal tuple into this tuple-like
+         * object.
+         */
+        template <class TupleType, std::size_t ItemIndex = 0>
+        void store(TupleType& dst) {
+            if constexpr (ItemIndex < std::tuple_size<TupleType>::value) {
+                std::get<ItemIndex>(dst) = std::move(std::get<ItemIndex>(dst_));
+                store<TupleType, ItemIndex + 1>(dst);
+            }
+        }
+
+        template <std::size_t ItemIndex = 0>
+        void parse_element_template(std::istream& in) {
+            if constexpr (std::tuple_size<decltype(dst_)>::value <= ItemIndex) {
+                // do nothing
+            } else if (index_ == ItemIndex) {
+                // We are parsing the ItemIndex-th item.
+                in >> std::get<ItemIndex>(dst_);
+                if (!in.fail()) {
+                    ++index_;
+                }
+            } else {
+                // We are parsing a subsequent item.
+                parse_element_template<ItemIndex + 1>(in);
+            }
+        }
+
+        void parse_element(std::istream& in) override {
+            parse_element_template<0>(in);
+        }
+    };
 };
 
 template <typename T>
@@ -518,6 +587,13 @@ template <typename K, typename V>
 std::istream& operator>>(std::istream& in,
                          std::unordered_map<K, V>& container) {
     detail::map_parser<K, V, std::unordered_map<K, V>> psr;
+    psr.parse(in, container);
+    return in;
+}
+
+template <typename T1, typename T2>
+std::istream& operator>>(std::istream& in, std::pair<T1, T2>& container) {
+    detail::tuple_parser<T1, T2> psr;
     psr.parse(in, container);
     return in;
 }
