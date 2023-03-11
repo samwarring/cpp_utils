@@ -3,6 +3,7 @@
 #include <sstream>
 
 using namespace samwarring::container_iostream;
+using namespace Catch::Matchers;
 
 SCENARIO("Containers can be formatted to ostream") {
     std::ostringstream out;
@@ -637,6 +638,46 @@ SCENARIO("Pairs can be parsed from istream") {
             THEN("The pair contains: 1, 2") {
                 REQUIRE(p.first == 1);
                 REQUIRE(p.second == 2);
+            }
+        }
+    }
+}
+
+SCENARIO("Tuples can be parsed from istream") {
+    GIVEN("A string representing an empty tuple") {
+        std::string input_string = GENERATE("[]", "{ }", " <  >  ", "()");
+        CAPTURE(input_string);
+        std::istringstream in(input_string);
+        WHEN("An empty-tuple is parsed") {
+            std::tuple<> t;
+            in >> t;
+            THEN("Parsing succeeds") {
+                REQUIRE(!in.fail());
+            }
+        }
+        WHEN("A tuple<int> is parsed") {
+            std::tuple<int> t;
+            in >> t;
+            THEN("Parsing fails") {
+                REQUIRE(in.fail());
+            }
+        }
+    }
+    GIVEN("A string representing an int-float-int tuple: 1, 3.14, 5") {
+        std::string input_string =
+            GENERATE("1 3.14 5", "{1, 3.14, 5}", "[1;3.14;5;]");
+        CAPTURE(input_string);
+        std::istringstream in(input_string);
+        WHEN("A tuple<int, float, int> is extracted") {
+            std::tuple<int, float, int> t;
+            in >> t;
+            THEN("Parsing succeeds") {
+                REQUIRE(!in.fail());
+            }
+            THEN("The tuple contains: 1, 3.14, 5") {
+                REQUIRE(std::get<0>(t) == 1);
+                REQUIRE_THAT(std::get<1>(t), WithinRel(3.14f));
+                REQUIRE(std::get<2>(t) == 5);
             }
         }
     }

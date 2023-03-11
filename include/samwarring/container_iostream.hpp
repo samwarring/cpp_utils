@@ -62,6 +62,8 @@ class detail {
     friend std::istream& operator>>(std::istream&, std::unordered_map<K, V>&);
     template <typename T1, typename T2>
     friend std::istream& operator>>(std::istream&, std::pair<T1, T2>&);
+    template <typename... Ts>
+    friend std::istream& operator>>(std::istream&, std::tuple<Ts...>&);
 
     template <class Cont>
     static std::ostream& write_sequence(std::ostream& out,
@@ -594,6 +596,13 @@ std::istream& operator>>(std::istream& in,
 template <typename T1, typename T2>
 std::istream& operator>>(std::istream& in, std::pair<T1, T2>& container) {
     detail::tuple_parser<T1, T2> psr;
+    psr.parse(in, container);
+    return in;
+}
+
+template <typename... Ts>
+std::istream& operator>>(std::istream& in, std::tuple<Ts...>& container) {
+    detail::tuple_parser<Ts...> psr;
     psr.parse(in, container);
     return in;
 }
