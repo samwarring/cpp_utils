@@ -4,7 +4,8 @@ add_executable(
     instance_tracker_test.cpp
     ring_buffer_test.cpp
     singleton_test.cpp
-    container_iostream_test.cpp
+    container_ostream_test.cpp
+    container_istream_test.cpp
 )
 
 # Require std::thread
