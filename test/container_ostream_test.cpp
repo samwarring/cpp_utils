@@ -229,8 +229,8 @@ SCENARIO("Containers can be formatted to ostream") {
         std::pair<int, std::string> v{42, "the answer"};
         WHEN("The pair is formatted") {
             out << v;
-            THEN("The result is '{42, the answer}'") {
-                REQUIRE(out.str() == "{42, the answer}");
+            THEN("The result is '{42, \"the answer\"}'") {
+                REQUIRE(out.str() == "{42, \"the answer\"}");
             }
         }
     }
@@ -249,8 +249,8 @@ SCENARIO("Containers can be formatted to ostream") {
         std::tuple<std::string> v{"hello"};
         WHEN("The tuple is formatted") {
             out << v;
-            THEN("The result is '{hello}'") {
-                REQUIRE(out.str() == "{hello}");
+            THEN("The result is '{\"hello\"}'") {
+                REQUIRE(out.str() == "{\"hello\"}");
             }
         }
     }
@@ -258,8 +258,28 @@ SCENARIO("Containers can be formatted to ostream") {
         std::tuple<int, std::string, char> v{-1, "hello", 'x'};
         WHEN("The tuple is formatted") {
             out << v;
-            THEN("The result is '{-1, hello, x}'") {
-                REQUIRE(out.str() == "{-1, hello, x}");
+            THEN("The result is '{-1, \"hello\", x}'") {
+                REQUIRE(out.str() == "{-1, \"hello\", x}");
+            }
+        }
+    }
+}
+
+SCENARIO("Containers of strings are formatted with quotes and escapes") {
+    GIVEN("A vector<string>: {\"with space\", \"without\", \"\", "
+          "\"new\\nline\", \"with\\ttab\", \"with\\\"quote\", "
+          "\"with\\rreturn\"}") {
+        std::vector<std::string> v{"with space",  "without",   "",
+                                   "new\nline",   "with\ttab", "with\"quote",
+                                   "with\rreturn"};
+        WHEN("The vector is formatted") {
+            std::ostringstream out;
+            out << v;
+            THEN("Each string in result has the necessary escape sequences") {
+                REQUIRE(out.str() ==
+                        "{\"with space\", \"without\", \"\", "
+                        "\"new\\nline\", \"with\\ttab\", \"with\\\"quote\", "
+                        "\"with\\rreturn\"}");
             }
         }
     }
