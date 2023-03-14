@@ -209,24 +209,40 @@ operator*(quantity<LhsRep, LhsTime, LhsDistance, LhsMass, LhsTemperature,
                     (LhsAngleScale * RhsAngleScale)>{lhs.value() * rhs.value()};
 }
 
-// template <class LhsRep, class RhsRep, double LhsTime, double RhsTime,
-//           double LhsDistance, double RhsDistance, double LhsMass,
-//           double RhsMass, double LhsTemperature, double RhsTemperature,
-//           double LhsAngle, double RhsAngle, double LhsTimeScale,
-//           double RhsTimeScale, double LhsDistanceScale, double
-//           RhsDistanceScale, double LhsMassScale, double RhsMassScale, double
-//           LhsTemperatureScale, double RhsTemperatureScale, double
-//           LhsAngleScale, double RhsAngleScale>
+template <class LhsRep, class RhsRep, double LhsTime, double RhsTime,
+          double LhsDistance, double RhsDistance, double LhsMass,
+          double RhsMass, double LhsTemperature, double RhsTemperature,
+          double LhsAngle, double RhsAngle, double LhsTimeScale,
+          double RhsTimeScale, double LhsDistanceScale, double RhsDistanceScale,
+          double LhsMassScale, double RhsMassScale, double LhsTemperatureScale,
+          double RhsTemperatureScale, double LhsAngleScale,
+          double RhsAngleScale>
 
-// quantity<decltype(std::declval<LhsRep>() / std::declval<RhsRep>()),
-//          (LhsTime - RhsTime), (LhsDistance - RhsDistance), (LhsMass -
-//          RhsMass), (LhsTemperature - RhsTemperature), (LhsAngle - RhsAngle),
-//          (LhsTimeScale / RhsTimeScale), (LhsDistanceScale /
-//          RhsDistanceScale), (LhsMassScale / RhsMassScale),
-//          (LhsTemperatureScale / RhsTemperatureScale),
-//          (LhsAngleScale / RhsAngleScale)>
+quantity<decltype(std::declval<LhsRep>() / std::declval<RhsRep>()),
+         (LhsTime - RhsTime), (LhsDistance - RhsDistance), (LhsMass - RhsMass),
+         (LhsTemperature - RhsTemperature), (LhsAngle - RhsAngle),
+         (LhsTimeScale / RhsTimeScale), (LhsDistanceScale / RhsDistanceScale),
+         (LhsMassScale / RhsMassScale),
+         (LhsTemperatureScale / RhsTemperatureScale),
+         (LhsAngleScale / RhsAngleScale)>
 
-// operator/();
+operator/(const quantity<LhsRep, LhsTime, LhsDistance, LhsMass, LhsTemperature,
+                         LhsAngle, LhsTimeScale, LhsDistanceScale, LhsMassScale,
+                         LhsTemperatureScale, LhsAngleScale>& lhs,
+
+          const quantity<RhsRep, RhsTime, RhsDistance, RhsMass, RhsTemperature,
+                         RhsAngle, RhsTimeScale, RhsDistanceScale, RhsMassScale,
+                         RhsTemperatureScale, RhsAngleScale>& rhs) {
+
+    return quantity<decltype(std::declval<LhsRep>() * std::declval<RhsRep>()),
+                    (LhsTime / RhsTime), (LhsDistance / RhsDistance),
+                    (LhsMass / RhsMass), (LhsTemperature / RhsTemperature),
+                    (LhsAngle / RhsAngle), (LhsTimeScale / RhsTimeScale),
+                    (LhsDistanceScale / RhsDistanceScale),
+                    (LhsMassScale / RhsMassScale),
+                    (LhsTemperatureScale / RhsTemperatureScale),
+                    (LhsAngleScale / RhsAngleScale)>{lhs.value() / rhs.value()};
+}
 
 // -----------------------------------------------------------------------------
 //                             Pre-defined Units
