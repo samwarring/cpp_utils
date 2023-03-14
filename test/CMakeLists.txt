@@ -1,6 +1,5 @@
 add_executable(
     samwarring_cpp_utils_test
-    main.cpp
     instance_tracker_test.cpp
     ring_buffer_test.cpp
     singleton_test.cpp
@@ -18,7 +17,7 @@ include(FetchContent)
 fetchcontent_declare(
     Catch2
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG v2.13.1
+    GIT_TAG v3.3.2
 )
 fetchcontent_makeavailable(Catch2)
 fetchcontent_getproperties(
@@ -35,7 +34,7 @@ catch_discover_tests(samwarring_cpp_utils_test)
 
 target_link_libraries(
     samwarring_cpp_utils_test
-    PRIVATE Catch2
+    PRIVATE Catch2::Catch2WithMain
             samwarring_cpp_utils
             Threads::Threads
 )

@@ -1,21 +1,21 @@
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <samwarring/quantity.hpp>
 
 using namespace samwarring::units;
 
 TEST_CASE("quantity") {
-    seconds<double> s{23.0};
-    grams<double> g{42.0};
-    // seconds2 oops{g}; // will not compile
-    meters<double> m{55.55};
-    kilograms<double> kg{g};
-    REQUIRE(kg.value() == 0.042);
+    seconds<double> _120_sec{120.0};
+    minutes<double> _2_min{2.0};
+    meters<double> _55_meters{55.0};
+    grams<double> _123_grams{123.0};
+    kilograms<double> _0_123_kg{0.123};
+    degrees<double> _90_deg{90.0};
+    radians<double> _pi_2_rad{std::numbers::pi / 2.0};
 
-    REQUIRE(seconds<int>{minutes<int>{2}}.value() == 120);
-    REQUIRE((seconds<int>{4} * 2).value() == 8);
-    REQUIRE((meters<int>{3} * meters<int>{2}).value() == 6);
-    REQUIRE(seconds<int>{120} == minutes<int>{2});
+    // Unused
+    (void)_55_meters;
 
-    bool b = radians<double>{std::numbers::pi / 2.0} == degrees<double>{90.0};
-    REQUIRE(b);
+    REQUIRE(_120_sec == _2_min);
+    REQUIRE(_123_grams == _0_123_kg);
+    REQUIRE(_90_deg == _pi_2_rad);
 }

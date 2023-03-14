@@ -1,4 +1,4 @@
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <samwarring/ring_buffer.hpp>
 #include <set>
 #include <string>
