@@ -182,8 +182,8 @@ template <typename LhsRep, typename RhsRep, double LhsTime, double RhsTime,
           double RhsAngleScale>
 
 quantity<decltype(std::declval<LhsRep>() * std::declval<RhsRep>()),
-         (LhsTime * RhsTime), (LhsDistance * RhsDistance), (LhsMass * RhsMass),
-         (LhsTemperature * RhsTemperature), (LhsAngle * RhsAngle),
+         (LhsTime + RhsTime), (LhsDistance + RhsDistance), (LhsMass + RhsMass),
+         (LhsTemperature + RhsTemperature), (LhsAngle + RhsAngle),
          (LhsTimeScale * RhsTimeScale), (LhsDistanceScale * RhsDistanceScale),
          (LhsMassScale * RhsMassScale),
          (LhsTemperatureScale * RhsTemperatureScale),
@@ -200,9 +200,9 @@ operator*(quantity<LhsRep, LhsTime, LhsDistance, LhsMass, LhsTemperature,
               rhs) {
 
     return quantity<decltype(std::declval<LhsRep>() * std::declval<RhsRep>()),
-                    (LhsTime * RhsTime), (LhsDistance * RhsDistance),
-                    (LhsMass * RhsMass), (LhsTemperature * RhsTemperature),
-                    (LhsAngle * RhsAngle), (LhsTimeScale * RhsTimeScale),
+                    (LhsTime + RhsTime), (LhsDistance + RhsDistance),
+                    (LhsMass + RhsMass), (LhsTemperature + RhsTemperature),
+                    (LhsAngle + RhsAngle), (LhsTimeScale * RhsTimeScale),
                     (LhsDistanceScale * RhsDistanceScale),
                     (LhsMassScale * RhsMassScale),
                     (LhsTemperatureScale * RhsTemperatureScale),
@@ -235,9 +235,9 @@ operator/(const quantity<LhsRep, LhsTime, LhsDistance, LhsMass, LhsTemperature,
                          RhsTemperatureScale, RhsAngleScale>& rhs) {
 
     return quantity<decltype(std::declval<LhsRep>() * std::declval<RhsRep>()),
-                    (LhsTime / RhsTime), (LhsDistance / RhsDistance),
-                    (LhsMass / RhsMass), (LhsTemperature / RhsTemperature),
-                    (LhsAngle / RhsAngle), (LhsTimeScale / RhsTimeScale),
+                    (LhsTime - RhsTime), (LhsDistance - RhsDistance),
+                    (LhsMass - RhsMass), (LhsTemperature - RhsTemperature),
+                    (LhsAngle - RhsAngle), (LhsTimeScale / RhsTimeScale),
                     (LhsDistanceScale / RhsDistanceScale),
                     (LhsMassScale / RhsMassScale),
                     (LhsTemperatureScale / RhsTemperatureScale),
@@ -277,6 +277,9 @@ DEFINE_UNIT(hours,     1.0,    0.0,       0.0,     0.0,   0.0,
            );
 DEFINE_UNIT(meters,    0.0,    1.0,       0.0,     0.0,   0.0,
                        1.0,    1.0,       1.0,     1.0,   1.0
+           );
+DEFINE_UNIT(millimeters, 0.0,  1.0,       0.0,     0.0,   0.0,
+                       1.0,  0.001,       1.0,     1.0,   1.0
            );
 DEFINE_UNIT(grams,     0.0,    0.0,       1.0,     0.0,   0.0,
                        1.0,    1.0,       1.0,     1.0,   1.0
